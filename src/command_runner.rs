@@ -95,7 +95,7 @@ impl CommandRunner {
             .font(self.style.font)
             .line_height(self.style.line_height)
             .on_action(move |action| on_update(Event::EditorAction(action)))
-            .style(|theme: &Theme, status: iced::widget::text_editor::Status| {
+            .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
                 let palette = theme.extended_palette();
                 text_editor::Style {
                     background: Background::Color(Color::TRANSPARENT),
