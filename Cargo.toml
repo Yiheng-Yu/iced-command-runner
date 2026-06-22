@@ -8,6 +8,10 @@ repository = "https://github.com/Yiheng-Yu/iced-command-runner.git"
 license-file = "LICENSE"
 keywords = ["iced", "widget", "command"]
 categories = ["gui"]
+exclude = [
+    ".gitignore"
+]
+
 
 [dev-dependencies]
 futures = "0.3.32"
