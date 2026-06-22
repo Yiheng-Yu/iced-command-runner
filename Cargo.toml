@@ -2,8 +2,12 @@
 name = "iced_command_runner"
 version = "0.1.0"
 edition = "2024"
-description = "An iced-widget for spawing command and pipe stdout/ stderr into the GUI."
-
+description = "An iced GUI widget for execute termianl commands and streaming output."
+readme = "README.md"
+repository = "https://github.com/Yiheng-Yu/iced-command-runner.git"
+license-file = "LICENSE"
+keywords = ["iced", "widget", "command"]
+categories = ["gui"]
 
 [dev-dependencies]
 futures = "0.3.32"
