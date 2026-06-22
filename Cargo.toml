@@ -9,7 +9,7 @@ license-file = "LICENSE"
 keywords = ["iced", "widget", "command"]
 categories = ["gui"]
 exclude = [
-    ".gitignore", "cargo_vcs_info.json"
+    ".gitignore", ".cargo_vcs_info.json"
 ]
 
 
