@@ -5,7 +5,6 @@ edition = "2024"
 description = "An iced GUI widget for execute termianl commands and streaming output."
 readme = "README.md"
 repository = "https://github.com/Yiheng-Yu/iced-command-runner.git"
-documentation = "https://docs.rs/iced_command_runner/latest/iced_command_runner/index.html"
 license-file = "LICENSE"
 keywords = ["iced", "widget", "command"]
 categories = ["gui"]
