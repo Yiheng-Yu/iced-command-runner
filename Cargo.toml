@@ -1,0 +1,21 @@
+[package]
+name = "iced_command_runner"
+version = "0.1.0"
+edition = "2024"
+description = "An iced-widget for spawing command and pipe stdout/ stderr into the GUI."
+
+
+[dev-dependencies]
+futures = "0.3.32"
+
+
+[dependencies]
+anyhow = "1.0.102"
+iced = { version = "0.14.0", features = [
+    'advanced',
+    'debug',
+    'tokio',
+] }
+iced_core = "0.14.0"
+log = "0.4.33"
+tokio = { version = "1.52.3", features = ["full"] }
