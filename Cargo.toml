@@ -2,7 +2,7 @@
 name = "iced_command_runner"
 version = "0.1.3"
 edition = "2024"
-description = "An iced GUI widget for execute termianl commands and streaming output."
+description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
 repository = "https://github.com/Yiheng-Yu/iced-command-runner.git"
 license-file = "LICENSE"
