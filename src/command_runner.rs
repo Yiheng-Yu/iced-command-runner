@@ -74,6 +74,17 @@ impl CommandRunner {
         }
     }
 
+    /// create new instace with no empty args
+    pub fn new_no_args(command: impl Into<String>) -> Self {
+        Self {
+            command: Argument {program: command.into(), args: vec::new()},
+            buffer: Vec::new(),
+            status: Status::Idle,
+            style: Style::default(),
+            content: Content::new(),
+        }
+    }
+
     /// Arguments to run terminal commands with
     pub fn args(&self) -> Vec<String> {
         self.command.args.clone()
