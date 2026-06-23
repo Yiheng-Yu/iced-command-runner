@@ -1,9 +1,16 @@
-use iced_command_runner::{CommandRunner, event::Event, run_button, create_runner, status_bar};
+use iced_command_runner::{
+    CommandRunner, 
+    event::Event,
+    run_button, 
+    create_runner,
+    status_bar
+};
 
-use iced::widget;
+use iced::{Length, widget};
 
 fn main() -> iced::Result {
-    iced::application(App::new, App::update, App::view).run()
+    iced::application(App::new, App::update, App::view)
+    .run()
 }
 
 #[derive(Clone, Debug)]
@@ -26,6 +33,7 @@ impl App {
     }
 
     pub fn view(&self) -> iced::Element<'_, Message> {
+        let title = widget::text("Terminal window with no 'clear buffer' button");
         let button = run_button("Run!", &self.runner.status, Message::Runner);
 
         let text_prompt = widget::row![
@@ -36,16 +44,30 @@ impl App {
         .align_y(iced::alignment::Vertical::Center)
         .width(iced::Length::Fill);
 
-        let terminal_window = widget::container(
+        let terminal_window1 = widget::container(
+            self.runner.crate_view(Message::Runner)
+        )
+            .width(iced::Length::Fill);
+
+        let terminal_window2 = widget::container(
+            self.runner.crate_view(Message::Runner)
+        )
+            .width(iced::Length::Fill);
+
+        let terminal_window3 = widget::container(
             self.runner.crate_view(Message::Runner)
         )
             .width(iced::Length::Fill);
 
         let status_bar = status_bar(&self.runner.status);
 
-        widget::column![text_prompt, button, terminal_window, status_bar]
+        let desc = widget::text("And multile views copies of the same command process:");
+        let terminal_window_row = widget::row![terminal_window2, terminal_window3];
+
+        widget::column![title, text_prompt, button, terminal_window1, desc, terminal_window_row, status_bar]
             .spacing(2.5)
             .padding(5.0)
+            .height(Length::Shrink)
             .into()
     }
 

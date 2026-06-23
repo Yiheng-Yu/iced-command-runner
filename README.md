@@ -1,12 +1,20 @@
+# iced_command_runner
+
+`iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs.
+
 ## Overview
 
-Widget for executing terminal commands and stream outputs
+The main stuff of the `iced_command_runner` crate is `CommandRunner`, it is a struct that holds data for `program` and `args` to execute, as well as `buffer` that stores data streamed from previous and currently running processes. `CommandRunner` provides a default `view` function that renders terminal output in ways similar to `zch` shell.
+
+Command execution is trigged by `Event::Execute` enum.
+
+Instance of CommandRunner itself does not work on its own, as you will need to incorporate it into other iced widgets to make it work.
+
+Feel free referring to the `demo.rs` in the provided `examples` for a working example.
 
 ## Getting started
 
-Instance of CommandRunner itself does not work on its own, as you will need to incorporate it into other iced widgets to make it work. The `iced_command_runner` module comes with some complimentary helper functions that provides a good enough (at least for me) out-of-box solution. Feel free referring to the `demo.rs` in the provided `examples` for more details.
-
-Here's a step-by-step guide of doing it:
+Here is the easiest way of doing it:
 
 ### **Step 1.** Add `Event` and `CommandRunner` to your application
 
@@ -56,9 +64,32 @@ impl App {
 }
 ```
 
-### **Step 2.** Set up`view()`
+### **Step 2.** Set up your `view()` function
 
-#### Streaming output
+The `iced_command_runner` module comes with a complimentary helper function `terminal_container` that provides a good enough (at least for me) out-of-box solution that renders a default layout. A demo of the default layout can be found in `examples/default_layout` (`cargo run --example default_layout`).
+
+To implement, simply put this in your `App`'s `view`:
+
+```rust
+...
+let terminal_window = terminal_container(&runner, Message::Runner, "Run", "Clear history")
+.spacing(..)
+.align_x(..)
+.align_y(..)
+.width(..)
+.height(..);
+...
+```
+
+Alternatively, you can set up your own layout as follow:
+
+#### Setting up your own layout
+
+The `iced_command_runner` comes with several widgets that meant to work together, and you can arrange/ use them however you like. A demo of an example custom layout can be found in `examples/custom_layout` (`cargo run --example custom_layout`).
+
+Here's a walkthrough of the widgets:
+
+##### Live stream terminal output
 
 `CommandRunner` impls `crate_view()` method that renders a simulated termianl window that streams termianl output as they got produced:
 
@@ -72,8 +103,6 @@ pub fn view<'a>(&'a self) -> Element<'a, Message> {
 }
 ```
 
-#### Helper functions
-
 ##### Triggering command execution
 
 Command execution is triggered by `Event::Execute`. You need to manually implement widgets to trigger this event and pass the event to to the `CommandRunner` instance via the `CommandRunner::update` methdod.
@@ -86,7 +115,24 @@ let trigger = run_button(
     widget::text("Run!"),   // or just plain &str
     &self.runner.status,  // current status of the command runner 
     Message::Runner // wraps Event inside your application `Message`
-    );
+    )
+    .style(..);  // function that returns button::Style
+```
+
+###### Clear buffer history
+
+`clear_buffer_button()` returns a button that clears history stored in `CommandRunner`:
+
+```rust
+use iced_command_runner::clear_buffer_button;
+...
+    // in your view() function:
+    let clear_history = clear_buffer_button(
+        widget::text("Wipe!"),   // or just plain &str
+        &self.runner.status,  // current status of the command runner 
+        Message::Runner // wraps Event inside your application `Message`
+        )
+        .style(..);  // function that returns button::Style
 ```
 
 ###### Executation status
@@ -99,7 +145,13 @@ let status_bar = status_bar::<Message>(&self.runner.status);
 
 ### **Step 3.** Set up `update()`
 
-Pass `event` back to the runner in your `update()`.
+Simply pass `event` back to the runner in your `update()` function, note that:
+
+1) the `update()` function NEEDS TO return `iced::Task` in order for this module to work
+
+2) you need to map the output of `runner.update()` back into your `Message`
+
+Example:
 
 ```rust
 pub fn update(
@@ -110,7 +162,6 @@ pub fn update(
         Message::Runner(event) => 
             self.runner.update(event)  // pass event to your runner
             .map(Message::Runner),  //! don't forget to map the output of `runner.update()` back into your Message::Runner
-
         // the rest of the update()
         ... 
     }
@@ -121,7 +172,9 @@ That's it, there's nothing else you need to do, you don't need to set up `subscr
 
 ## Styling
 
-Styling configurations is pretty straightforward:
+Two button functions (`clear_buffer_button` and `run_button`) return an `iced::widget::button::Button` instance that allows you to style them however you like.
+
+The `CommandRunner` styling is pretty similar too:
 
 ```rust
 let runner = create_runner(command, args)

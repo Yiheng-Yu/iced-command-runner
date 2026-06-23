@@ -8,6 +8,10 @@ pub enum Event {
     Execute,
     /// flag for letting CommandRunner know it's command spawing was successful
     Spawing,
+
+    /// flag for clearing buffer stored in `CommandRunner`
+    ClearBuffer,
+
     /// data produced by the terminal
     Stream(Terminal),
     /// user interactions on the terminal output window, mainly used for making output texts selectable 

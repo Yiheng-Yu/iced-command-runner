@@ -1,9 +1,9 @@
-
 use crate::{
     Argument,
     event::{Event, Terminal},
     run_command,
 };
+
 // rustfmt::skip
 use iced::widget::text_editor; // text_editor::{self, Content} would import text_editor the module instead of text_editor the funciton
 use iced::{
@@ -44,6 +44,7 @@ pub enum Status {
 /// let runner = create_runner::new("echo", ["hiii"])
 /// .text_size(13.0);
 /// ```
+#[derive(Clone)]
 pub struct CommandRunner {
     /// command to run
     pub command: Argument,
@@ -228,6 +229,12 @@ impl CommandRunner {
                 }
             }
 
+            Event::ClearBuffer => {
+                self.buffer = Vec::new();
+                self.update_editor_content();
+                Task::none()
+            }
+
             Event::Spawing => {
                 self.status = Status::Running;
                 Task::none()
@@ -320,6 +327,7 @@ impl CommandRunner {
 }
 
 /// Styling options for CommandRunner
+#[derive(Clone)]
 pub struct Style {
     /// shell prompt, i.e., the `>>>` thingy in python, the `username@location:` thingy in bash
     pub prompt: String,
@@ -347,10 +355,31 @@ pub struct Style {
     pub font: Font,
 }
 
+
 impl Default for Style {
     fn default() -> Self {
+        // zch-like shell prompt
+        let cwd = std::env::current_dir().unwrap_or_default();
+        let cwd = if cwd.components().count() > 3 {
+            let full_path = std::env::current_dir()
+                .unwrap_or_default()
+                .iter()
+                .rev()
+                .take(3)
+                .map(|s| s.to_str().unwrap_or_default())
+                .collect::<Vec<&str>>()
+                .join("/");
+
+            format!("..{}", full_path)
+        } else {
+            cwd
+            .to_str()
+            .unwrap_or_default()
+            .to_string()
+        };
+        
         Self {
-            prompt: ">".into(),
+            prompt: format!("{} >", cwd),
             width: Length::Fill,
             max_lines: Some(12),
             height: (300.0).into(),

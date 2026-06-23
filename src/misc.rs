@@ -6,20 +6,44 @@ use iced::{
 };
 use iced_core::text::Wrapping;
 
-/// button that triggers command execution (needs to use with CommandRunner)
+/// button that sends `Event::Execute` message when pressed. 
+/// Passing `Event::Execute`` to `CommandRunner.update()` triggers command execution and output streaming
+/// This function is intended to use inside the `view()` function of your application.
 pub fn run_button<'a, Message>(
     content: impl Into<Element<'a, Message>>,
     runner_status: &Status,
     on_press: impl Fn(Event) -> Message,
-) -> Element<'a, Message>
+) -> button::Button<'a, Message>
 where
     Message: 'a + Clone,
 {
-    let message = on_press(Event::Execute);
     if runner_status == &Status::Idle {
-        button(content).on_press(message).into()
+        let msg = on_press(Event::Execute);
+        button(content)
+        .on_press(msg)
+        .into()
     } else {
         button(content).into()
+    }
+}
+
+
+/// button that sends `Event::ClearBuffer` message when pressed. 
+/// Passing `Event::ClearBuffer`` to `CommandRunner.update()` removes all buffer stored in the `CommandRunner` instance
+/// This function is intended to use inside the `view()` function of your application.
+pub fn clear_buffer_button<'a, Message>(
+    content: impl Into<Element<'a, Message>>,
+    runner_status: &Status,
+    on_press: impl Fn(Event) -> Message,
+) -> button::Button<'a, Message>
+where
+    Message: 'a + Clone,
+{
+    if runner_status == &Status::Idle {
+        let msg = on_press(Event::ClearBuffer);
+        button(content).on_press(msg)
+    } else {
+        button(content)
     }
 }
 
