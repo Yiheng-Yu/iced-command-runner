@@ -4,6 +4,7 @@ version = "0.1.32"
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
+license = "MIT"
 repository = "https://github.com/Yiheng-Yu/iced-command-runner.git"
 keywords = ["iced", "widget", "command"]
 categories = ["gui"]

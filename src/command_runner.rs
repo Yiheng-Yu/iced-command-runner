@@ -77,7 +77,7 @@ impl CommandRunner {
     /// create new instace with no empty args
     pub fn new_no_args(command: impl Into<String>) -> Self {
         Self {
-            command: Argument {program: command.into(), args: vec::new()},
+            command: Argument {program: command.into(), args: Vec::new()},
             buffer: Vec::new(),
             status: Status::Idle,
             style: Style::default(),
