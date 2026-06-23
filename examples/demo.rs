@@ -1,4 +1,4 @@
-use iced_command_runner::{CommandRunner, event::Event, run_button, crate_runner, status_bar};
+use iced_command_runner::{CommandRunner, event::Event, run_button, create_runner, status_bar};
 
 use iced::widget;
 
@@ -20,7 +20,7 @@ struct App {
 impl App {
     pub fn new() -> Self {
         Self {
-            runner: crate_runner("echo", [""]),
+            runner: create_runner("echo", [""]),
             to_echo: String::new(),
         }
     }

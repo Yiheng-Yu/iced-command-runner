@@ -1,6 +1,6 @@
 [package]
 name = "iced_command_runner"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "An iced GUI widget for execute termianl commands and streaming output."
 readme = "README.md"

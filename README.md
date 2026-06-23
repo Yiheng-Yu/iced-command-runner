@@ -34,11 +34,11 @@ struct App {
 }
 ```
 
-To init a new `CommandRunner` instance, use `CommandRunner::new` or `crate_runner`.
+To init a new `CommandRunner` instance, use `CommandRunner::new` or `create_runner`.
 Example:
 
 ```rust
-use iced_command_runner::crate_runner;
+use iced_command_runner::create_runner;
 
 impl App {
     pub fn new(
@@ -46,7 +46,7 @@ impl App {
         command: impl Into<String>, 
         args: impl IntoIterator<Item = impl Into<String>>
     ) -> Self {
-        let runner = crate_runner(command, args);  // or CommandRunner::new(command, args)
+        let runner = create_runner(command, args);  // or CommandRunner::new(command, args)
 
         Self {
             ...  // your codes
@@ -76,7 +76,9 @@ pub fn view<'a>(&'a self) -> Element<'a, Message> {
 
 ##### Triggering command execution
 
-Command execution is triggered by `Event::Execute` instance by passing `Event::Execute` to `CommandRunner` via the `.update()` method. You need to manually implement ways to achieve this. `iced_command_runner` module provides a handy function that creates a button does this, `run_button`:
+Command execution is triggered by `Event::Execute`. You need to manually implement widgets to trigger this event and pass the event to to the `CommandRunner` instance via the `CommandRunner::update` methdod.
+
+You can also use the (very handy!) function that comes with `iced_command_runner`, `run_button`:
 
 ```rust
 // in your view() function:
@@ -89,7 +91,7 @@ let trigger = run_button(
 
 ###### Executation status
 
-`iced_command_runner` also comes with a (very handy!! and very beautiful!!) widget that displays current execution status:
+`iced_command_runner` also comes with another (very handy!! and very beautiful!!) widget that displays current execution status:
 
 ```rust
 let status_bar = status_bar(&self.runner.status);
@@ -122,7 +124,7 @@ That's it, there's nothing else you need to do, you don't need to set up `subscr
 Styling configurations is pretty straightforward:
 
 ```rust
-let runner = crate_runner(command, args)
+let runner = create_runner(command, args)
     .prompt("yourname@localhost:")
     .text_size(8.0)
     .background(..)

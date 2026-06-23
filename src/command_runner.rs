@@ -21,11 +21,16 @@ use iced::{
 };
 use log::warn;
 
+/// Command execution status
 #[derive(Clone, PartialEq)]
 pub enum Status {
+    /// ready to run
     Idle,
+    /// spawing
     Initialize,
+    /// currently running command
     Running,
+    /// ExitError with error message
     Failed(String),
 }
 
@@ -33,19 +38,32 @@ pub enum Status {
 /// Instance of CommandRunner itself does not work on its own, as you will need to incorporate it with other iced widgets to make it work. 
 /// 
 /// Example usage:
-/// ```
-/// use iced_cmd_runner::crate_runner;
+/// ```rust
+/// use iced_cmd_runner::create_runner;
 /// 
+/// let runner = create_runner::new("echo", ["hiii"])
+/// .text_size(13.0);
 /// ```
 pub struct CommandRunner {
+    /// command to run
     pub command: Argument,
+    /// message streamed from the spawned process
     pub buffer: Vec<Terminal>,
+    /// current status i.e., running, idle etc.,
     pub status: Status,
+    /// style configurations. Check iced_command_runner::Style for more details
     style: Style,
+    /// used for iced text_editor widget, for displaying seleectable texts
     content: Content,
 }
 
 impl CommandRunner {
+    /// create new CommandRunner instance, example:
+    /// ```rust
+    /// use iced_cmd_runner::CommandRunner;
+    /// let runner = CommandRunner::new("echo", ["hiii"])
+    /// .text_size(13.0);
+    /// ```
     pub fn new(command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
             command: Argument::new(command, args),
@@ -86,6 +104,7 @@ impl CommandRunner {
             .into()
     }
 
+    /// Crates a mocked terminal window to display message received in `self.buffer`
     pub fn crate_view<'a, Message>(&'a self, on_update: impl Fn(Event) -> Message + 'a) -> Element<'a, Message>
     where
         Message: Clone + 'a,
