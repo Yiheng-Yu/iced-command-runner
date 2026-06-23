@@ -1,6 +1,6 @@
 [package]
 name = "iced_command_runner"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "An iced GUI widget for execute termianl commands and streaming output."
 readme = "README.md"
@@ -18,7 +18,6 @@ futures = "0.3.32"
 
 
 [dependencies]
-anyhow = "1.0.102"
 iced = { version = "0.14.0", features = [
     'advanced',
     'debug',

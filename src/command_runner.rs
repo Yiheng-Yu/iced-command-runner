@@ -74,6 +74,16 @@ impl CommandRunner {
         }
     }
 
+    /// Arguments to run terminal commands with
+    pub fn args(&self) -> Vec<String> {
+        self.command.args.clone()
+    }
+
+    /// program to run
+    pub fn program(&self) -> &str {
+        &self.command.program
+    }
+
     // ------------------------------------------------------------------
     // Drawing
     // ------------------------------------------------------------------
