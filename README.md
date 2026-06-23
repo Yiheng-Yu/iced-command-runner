@@ -94,7 +94,7 @@ let trigger = run_button(
 `iced_command_runner` also comes with another (very handy!! and very beautiful!!) widget that displays current execution status:
 
 ```rust
-let status_bar = status_bar(&self.runner.status);
+let status_bar = status_bar::<Message>(&self.runner.status);
 ```
 
 ### **Step 3.** Set up `update()`
