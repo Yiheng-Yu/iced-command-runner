@@ -10,7 +10,7 @@ use iced_core::text::Wrapping;
 pub fn run_button<'a, Message>(
     content: impl Into<Element<'a, Message>>,
     runner_status: &Status,
-    on_press: fn(Event) -> Message,
+    on_press: impl Fn(Event) -> Message,
 ) -> Element<'a, Message>
 where
     Message: 'a + Clone,
