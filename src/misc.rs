@@ -17,13 +17,14 @@ pub fn run_button<'a, Message>(
 where
     Message: 'a + Clone,
 {
-    if runner_status == &Status::Idle {
+    // make button unclickable if it's running
+    if runner_status != &Status::Idle {
+        button(content).into()
+    } else {
         let msg = on_press(Event::Execute);
         button(content)
         .on_press(msg)
         .into()
-    } else {
-        button(content).into()
     }
 }
 
@@ -39,11 +40,12 @@ pub fn clear_buffer_button<'a, Message>(
 where
     Message: 'a + Clone,
 {
-    if runner_status == &Status::Idle {
+    // make button unclickable if it's running
+    if runner_status != &Status::Idle {
+        button(content)
+    } else {
         let msg = on_press(Event::ClearBuffer);
         button(content).on_press(msg)
-    } else {
-        button(content)
     }
 }
 

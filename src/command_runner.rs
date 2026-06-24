@@ -161,10 +161,6 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // Updating internal states
     // ------------------------------------------------------------------
-    pub fn is_running(&self) -> bool {
-        self.status != Status::Idle
-    }
-
     fn format_command(&self) -> String {
         format!("{} {} {}\n", &self.style.prompt, &self.command.program, &self.command.args.join(" "))
     }
@@ -193,6 +189,10 @@ impl CommandRunner {
         Task::stream(streamer)
     }
 
+    pub fn is_running(&self) -> bool {
+        self.status != Status::Idle
+    }
+    
     pub fn update(&mut self, event: Event) -> Task<Event> {
         match event {
             // Start streaming data
