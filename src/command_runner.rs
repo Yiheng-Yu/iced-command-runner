@@ -162,7 +162,7 @@ impl CommandRunner {
     // Updating internal states
     // ------------------------------------------------------------------
     pub fn is_running(&self) -> bool {
-        self.status == Status::Initialize || self.status == Status::Running
+        self.status != Status::Idle
     }
 
     fn format_command(&self) -> String {
