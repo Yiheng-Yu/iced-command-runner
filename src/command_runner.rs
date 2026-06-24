@@ -16,7 +16,7 @@ use iced::{
         container, 
         scrollable, 
         text::LineHeight, 
-        text_editor::Content
+        text_editor::{Content, Action, Edit}
     },
 };
 use log::warn;
@@ -166,7 +166,7 @@ impl CommandRunner {
     }
 
     fn format_command(&self) -> String {
-        format!("{} {}\n", &self.command.program, &self.command.args.join(" "))
+        format!("{} {} {}\n", &self.style.prompt, &self.command.program, &self.command.args.join(" "))
     }
 
     fn update_editor_content(&mut self) {
@@ -181,12 +181,14 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        self.buffer.push(to_push);
-        self.update_editor_content();
+        println!("{:#?}", &to_push);
+        self.buffer.push(to_push.clone());
+        self.content.perform(
+            Action::Edit(Edit::Paste(to_push.as_str().to_string().into())
+        ));
     }
 
     fn create_stream(&mut self) -> Task<Event> {
-        self.push_to_buffer(Terminal::StdIn(self.format_command()));
         let runner = self.command.clone();
         let streamer = channel(1024, |messenger| run_command(runner, messenger));
         Task::stream(streamer)
@@ -198,6 +200,7 @@ impl CommandRunner {
             Event::Execute => {
                 if !self.is_running() {
                     self.status = Status::Initialize;
+                    self.push_to_buffer(Terminal::StdIn(self.format_command()));
                     self.create_stream()
                 } else {
                     // Techanically for most cases it's okay, it's just that for now

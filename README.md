@@ -279,3 +279,9 @@ impl CommandRunner{
 The main motivation for writing this is being able to create a GUI app that runs various pre-written CLI scripts in parallel. An alternative choice would be the [iced_term](https://github.com/Harzu/iced_term). It is a terminal emulator widget that more or less does the same job. The main difference between `iced_term` and the current crate is that `iced_command_runner` does not use `subscribe`. It spawns a child process, execute the command and shuts itself down after running it.
 
 The good thing about this apporach is you don't have some command line process that constantly runs in the background. This means it's much easier to spawn lots and lots and lots of child processes that gets executed in parallel. The bad thing about this approach is also, you don't have some command line process that constantly runs in the background, which can be *really* handy some times. For example, implementing `stdin` turned out to be a bit of a headacahe.
+
+## Future (to do list)
+
+- Set up alternative displaying options (i.e., use text/ rich_text instead of iced::text_editor)
+- Set up 'terminate' button that terminates/ kills currently running process.
+- Set up support for `stdin`

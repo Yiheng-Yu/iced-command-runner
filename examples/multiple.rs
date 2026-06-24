@@ -23,8 +23,8 @@ impl App {
     pub fn new() -> Self {
         Self {
             runners: vec![
-                CommandRunner::new("echo", ["haha echo this first message", ]).num_lines(25),
-                CommandRunner::new("echo", ["haha another message gets echoed", ]).num_lines(25)
+                CommandRunner::new("echo", ["'haha echo this first message'", ]).num_lines(25),
+                CommandRunner::new("echo", ["'a different message gets echoed'", ]).num_lines(25)
             ]
         }
     }
