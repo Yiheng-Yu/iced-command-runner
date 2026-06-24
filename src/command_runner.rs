@@ -181,7 +181,6 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        println!("{:#?}", &to_push);
         self.buffer.push(to_push.clone());
         self.content.perform(
             Action::Edit(Edit::Paste(to_push.as_str().to_string().into())
