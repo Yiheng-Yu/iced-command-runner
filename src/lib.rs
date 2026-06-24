@@ -5,6 +5,7 @@ mod command_runner;
 pub mod event;
 mod misc;
 pub use command_runner::{CommandRunner, Status, Style};
+use std::rc::Rc;
 
 pub use argument::{Argument, run_command};
 pub use event::{Event, Terminal};
@@ -72,24 +73,34 @@ pub fn create_runner(
 /// ```
 pub fn terminal_container<'a, Message>(
     runner: &'a CommandRunner,
-    on_update: fn(event::Event) -> Message,
+    on_update: impl Fn(event::Event) -> Message + 'a,
     execute: impl Into<Element<'a, Message>>,
     clear_buffer: impl Into<Element<'a, Message>>,
 ) -> container::Container<'a, Message>
 where
     Message: Clone + 'a
 {   
-    let terminal_window = runner.crate_view(on_update);
+    let on_update = Rc::new(on_update);
+
+    let terminal_view_mapper = on_update.clone();
+    let execute_button_mapper = on_update.clone();
+    let clear_buffer_mapper = on_update.clone();
+
+    let terminal_window = runner.crate_view(
+        move |event| (terminal_view_mapper)(event)
+    );
+
     let execute = run_button(
-        container(execute).align_x(Horizontal::Center), 
-        &runner.status, 
-        on_update
-    );
+            container(execute).align_x(Horizontal::Center), 
+            &runner.status,
+            move |event| (execute_button_mapper)(event)
+        );
+    
     let clear_buffer = clear_buffer_button(
-        container(clear_buffer).align_x(Horizontal::Center), 
-        &runner.status, 
-        on_update
-    );
+            container(clear_buffer).align_x(Horizontal::Center),
+            &runner.status,
+            move |event| (clear_buffer_mapper)(event)
+        );
 
     let buttons = row![
         execute.width(iced::Length::Fill),

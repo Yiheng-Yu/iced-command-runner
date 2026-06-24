@@ -69,8 +69,8 @@ pub async fn run_command(to_run: Argument, messenger: mpsc::Sender<Event>) {
     let mut stdout_reader = BufReader::new(stdout);
     let mut stderr_reader = BufReader::new(stderr);
 
-    let mut stdout_buf = [0u8; 1024];
-    let mut stderr_buf = [0u8; 1024];
+    let mut stdout_buf = [0u8; 256];
+    let mut stderr_buf = [0u8; 256];
 
     // unsure if there were any other better ways of doing this, but,,this took me so bloddy long time,,,
     let mut stdout_done = false;

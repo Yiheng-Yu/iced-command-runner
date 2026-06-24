@@ -14,6 +14,7 @@ pub enum Event {
 
     /// data produced by the terminal
     Stream(Terminal),
+
     /// user interactions on the terminal output window, mainly used for making output texts selectable 
     /// (i.e., can select text -> copy -> paste elsewhere)
     EditorAction(EditorAction),

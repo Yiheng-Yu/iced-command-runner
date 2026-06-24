@@ -153,13 +153,7 @@ impl CommandRunner {
 
         // optional render as scrollable
         match self.style.max_lines {
-            Some(num) => {
-                if self.buffer.len() as u32 >= num {
-                    self.wrap_inside_scrollable(editor)
-                } else {
-                    self.wrap_inside_container(editor)
-                }
-            }
+            Some(_) => self.wrap_inside_scrollable(editor),
             None => self.wrap_inside_container(editor),
         }
     }
@@ -194,7 +188,7 @@ impl CommandRunner {
     fn create_stream(&mut self) -> Task<Event> {
         self.push_to_buffer(Terminal::StdIn(self.format_command()));
         let runner = self.command.clone();
-        let streamer = channel(512, |messenger| run_command(runner, messenger));
+        let streamer = channel(1024, |messenger| run_command(runner, messenger));
         Task::stream(streamer)
     }
 
@@ -322,6 +316,22 @@ impl CommandRunner {
 
     pub fn line_height(mut self, line_height: impl Into<LineHeight>) -> Self {
         self.style.line_height = line_height.into();
+        self
+    }
+
+    pub fn num_lines(mut self, num_lines: u32) -> Self {
+        self.style.max_lines = Some(num_lines);
+        self
+    }
+
+    pub fn height(mut self, length: impl Into<Length>) -> Self {
+        self.style.height = length.into();
+        self.style.max_lines = None;
+        self
+    }
+
+    pub fn width(mut self, length: impl Into<Length>) -> Self {
+        self.style.width = length.into();
         self
     }
 }

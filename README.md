@@ -1,4 +1,3 @@
-# iced_command_runner
 
 `iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs.
 
