@@ -22,7 +22,7 @@ use iced::{
 use log::warn;
 
 /// Command execution status
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Status {
     /// ready to run
     Idle,
@@ -44,7 +44,7 @@ pub enum Status {
 /// let runner = create_runner::new("echo", ["hiii"])
 /// .text_size(13.0);
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommandRunner {
     /// command to run
     pub command: Argument,
@@ -340,7 +340,7 @@ impl CommandRunner {
 }
 
 /// Styling options for CommandRunner
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Style {
     /// shell prompt, i.e., the `>>>` thingy in python, the `username@location:` thingy in bash
     pub prompt: String,

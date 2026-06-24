@@ -3,7 +3,7 @@
 
 ## Overview
 
-The main stuff of the `iced_command_runner` crate is `CommandRunner`, it is a struct that holds data for `program` and `args` to execute, as well as `buffer` that stores data streamed from previous and currently running processes. `CommandRunner` provides a default `view` function that renders terminal output in ways similar to `zch` shell.
+The main stuff of the `iced_command_runner` crate is `CommandRunner`, it is a struct that holds data for `program` and `args` to execute, as well as `buffer` that stores data streamed from previous and currently running processes. `CommandRunner` provides a default `create_view()` function that renders terminal output in ways similar to a shell.
 
 Command execution is trigged by `Event::Execute` enum.
 
@@ -254,25 +254,7 @@ match message {
 
 ### Redirect terminal output elsewhere
 
-You can use `CommandRunner` solely as a backend that simply executes command in a child process, and provides [`Stream`](https://docs.rs/futures-core/0.3.32/futures_core/stream/trait.Stream.html) that pushes data to your application.
-
-The function that responsible for creating `Task::Stream` is via the private function `create_stream`. You can `impl` your own code that looks like:
-
-```rust
-use iced_command_runner::CommandRunner;
-
-impl CommandRunner{
-    fn my_stream(&self) -> Task<Message> {
-        let output_stream = self.create_stream();
-        // do whatever you want here..
-    }
-
-    ..
-    pub update(&self, Message) -> Task<Message> {
-        // handle incoming messages as usual
-    }
-}
-```
+You can use `CommandRunner` solely as a backend that simply executes command in a child process, and provides [`Stream`](https://docs.rs/futures-core/0.3.32/futures_core/stream/trait.Stream.html) that pushes data to your application. You can trigger the command execution & data streaming in your `update()` method and handling rendeirng etc. as you wish.
 
 ## Similar crates
 

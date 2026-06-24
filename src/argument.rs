@@ -9,7 +9,7 @@ use crate::event::{Event, Terminal};
 // Command execution
 // ==============================================================================
 /// Command line arguments to run
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Argument {
     pub program: String,
     pub args: Vec<String>,
