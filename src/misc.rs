@@ -19,12 +19,12 @@ where
 {
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
-        button(content).into()
+        button(content)
+        .style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::Execute);
         button(content)
         .on_press(msg)
-        .into()
     }
 }
 
@@ -43,9 +43,11 @@ where
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
         button(content)
+        .style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::ClearBuffer);
-        button(content).on_press(msg)
+        button(content)
+        .on_press(msg)
     }
 }
 
