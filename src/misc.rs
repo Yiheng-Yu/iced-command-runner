@@ -18,7 +18,7 @@ where
     Message: 'a + Clone,
 {
     // make button unclickable if it's running
-    if !Status::is_running(runner_status) {
+    if Status::is_running(runner_status) {
         button(content).into()
     } else {
         let msg = on_press(Event::Execute);
@@ -41,7 +41,7 @@ where
     Message: 'a + Clone,
 {
     // make button unclickable if it's running
-    if !Status::is_running(runner_status) {
+    if Status::is_running(runner_status) {
         button(content)
     } else {
         let msg = on_press(Event::ClearBuffer);
