@@ -34,7 +34,7 @@ Here is the easiest way of doing it:
 
 Add `Event` to your application's `Message`:
 
-```rust, ignore
+```rust
 use iced_command_runner::{
     CommandRunner,
     event::Event
@@ -49,7 +49,7 @@ enum Message {
 
 Add `CommandRunner`:
 
-```rust, ignore
+```rust
 struct App {
     runner: CommandRunner,
     ..  // the rest of the app
@@ -59,7 +59,7 @@ struct App {
 To init a new `CommandRunner` instance, use `CommandRunner::new` or `create_runner`.
 Example:
 
-```rust, ignore
+```rust
 use iced_command_runner::create_runner;
 
 impl App {
@@ -84,7 +84,7 @@ The `iced_command_runner` module comes with a complimentary helper function `ter
 
 To implement, simply put this in your `App`'s `view`:
 
-```rust, ignore
+```rust
 ...
 let terminal_window = terminal_container(&runner, Message::Runner, "Run", "Clear history")
 .spacing(..)
@@ -107,7 +107,7 @@ Here's a walkthrough of the widgets:
 
 `CommandRunner` impls `crate_view()` method that renders a simulated termianl window that streams termianl output as they got produced:
 
-```rust, ignore
+```rust
 pub fn view<'a>(&'a self) -> Element<'a, Message> {
     ...
     let terminal_window = self.runner.crate_view(
@@ -123,7 +123,7 @@ Command execution is triggered by `Event::Execute`. You need to manually impleme
 
 You can also use the (very handy!) function that comes with `iced_command_runner`, `run_button`:
 
-```rust, ignore
+```rust
 // in your view() function:
 let trigger = run_button(
     widget::text("Run!"),   // or just plain &str
@@ -137,7 +137,7 @@ let trigger = run_button(
 
 `clear_buffer_button()` returns a button that clears history stored in `CommandRunner`:
 
-```rust, ignore
+```rust
 use iced_command_runner::clear_buffer_button;
 ...
     // in your view() function:
@@ -153,7 +153,7 @@ use iced_command_runner::clear_buffer_button;
 
 `iced_command_runner` also comes with another (very handy!! and very beautiful!!) widget that displays current execution status:
 
-```rust, ignore
+```rust
 let status_bar = status_bar::<Message>(&self.runner.status);
 ```
 
@@ -167,7 +167,7 @@ Simply pass `event` back to the runner in your `update()` function, note that:
 
 Example:
 
-```rust, ignore
+```rust
 pub fn update(
     &mut self, 
     message: Message
@@ -190,7 +190,7 @@ Two button functions (`clear_buffer_button` and `run_button`) return an `iced::w
 
 The `CommandRunner` styling is pretty similar too:
 
-```rust, ignore
+```rust
 let runner = create_runner(command, args)
     .prompt("yourname@localhost:")
     .text_size(8.0)
@@ -205,7 +205,7 @@ let runner = create_runner(command, args)
 
 If you don't like currently rendering setups and wishing to render things differently, you can implement your own `view()` functions that renders terminal outputs stored in the `buffer` field:
 
-```rust, ignore
+```rust
 let content: Vec<Element<'_, Message>> = runner.buffer.iter().map(
     |output| {
         match output {
