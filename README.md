@@ -1,5 +1,12 @@
 
-`iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs. Documentation can be found via links in [Crates.io](https://crates.io/crates/iced_command_runner).
+`iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs. 
+
+Links to documentation:
+
+- [Crates.io](https://crates.io/crates/iced_command_runner)
+
+- [Doc for the latest release](https://docs.rs/iced_command_runner/latest/iced_command_runner/)
+
 
 Note that this is still a bit of work-in-progress. Current API is done and won't change (at least too much) in the forseeable future. There might be some small bugs here and there but the crate itself should be functional for majorities of the use case. They will get fixed one by one in my free time.
 
