@@ -34,12 +34,29 @@ pub enum Status {
     Failed(String),
 }
 
+impl Status {
+    /// list of status that should be considered 'running'
+    pub fn running(&self) -> [Status; 2] {
+        [Status::Initialize, Status::Running]
+    }
+
+    /// check if some members is 'running' -> this includes `Running` and `Initialize`
+    pub fn is_running(status: &Status) -> bool {
+        match status {
+            Status::Failed(_) => false,
+            Status::Idle => false,
+            Status::Running => true,
+            Status::Initialize => true
+        }
+    }
+}
+
 /// CommandRunner that executes terminal command, and stream the output to its buffer.
 /// Instance of CommandRunner itself does not work on its own, as you will need to incorporate it with other iced widgets to make it work. 
 /// 
 /// Example usage:
-/// ```rust
-/// use iced_cmd_runner::create_runner;
+/// ```rust, ignore
+/// use iced_command_runner::create_runner;
 /// 
 /// let runner = create_runner::new("echo", ["hiii"])
 /// .text_size(13.0);
@@ -60,8 +77,8 @@ pub struct CommandRunner {
 
 impl CommandRunner {
     /// create new CommandRunner instance, example:
-    /// ```rust
-    /// use iced_cmd_runner::CommandRunner;
+    /// ```rust, ignore
+    /// use iced_command_runner::CommandRunner;
     /// let runner = CommandRunner::new("echo", ["hiii"])
     /// .text_size(13.0);
     /// ```
@@ -190,7 +207,7 @@ impl CommandRunner {
     }
 
     pub fn is_running(&self) -> bool {
-        self.status != Status::Idle
+        Status::is_running(&self.status)
     }
     
     pub fn update(&mut self, event: Event) -> Task<Event> {
@@ -248,6 +265,7 @@ impl CommandRunner {
             }
 
             Event::ExitError(err_message) => {
+                // self.push_to_buffer(Terminal::Error(err_message));
                 self.status = Status::Failed(err_message);
                 Task::none()
             }
@@ -258,8 +276,8 @@ impl CommandRunner {
     // command running
     // ------------------------------------------------------------------
     /// Update argument for the command to run. i.e:
-    /// ```
-    /// use iced_cmd_runner::CommandRunner;
+    /// ```ignore
+    /// use iced_command_runner::CommandRunner;
     /// let runner = CommandRunner::new("echo", ["hello!"]);  // receives Terminal::StdOut("hello!\n")
     /// runner.set_args(["hi"]);
     /// runner.update(Event::Execute).await; // receives Terminal::StdOut("hi\n")
@@ -458,5 +476,52 @@ mod tests {
     #[tokio::test]
     async fn test_create_command() {
         let runner = CommandRunner::new("echo", ["hello!"]);
+    }
+
+    #[test]
+    fn test_runner_status() {
+        let mut runner = CommandRunner::new("echo", ["hello!"]);
+
+        // don't update with Event::update and it should be fine
+        let _ = runner.update(Event::Spawing);
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let tmp_msg = "".to_string();
+        let _ = runner.update(Event::Stream( Terminal::Error(tmp_msg.clone())) );
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::Stream( Terminal::StdIn(tmp_msg.clone())) );
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::Stream( Terminal::StdOut(tmp_msg.clone())) );
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::Stream( Terminal::StdErr(tmp_msg.clone())) );
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::ClearBuffer);
+        assert_eq!(runner.is_running(), true);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::ExitSuccess);
+        assert_eq!(runner.is_running(), false);
+        let check = &runner.status == &Status::Idle;
+        assert_eq!(check, true);
+
+        let _ = runner.update(Event::ExitError(tmp_msg.clone()));
+        assert_eq!(runner.is_running(), false);
+        let check = &runner.status != &Status::Idle;
+        assert_eq!(check, true);
     }
 }

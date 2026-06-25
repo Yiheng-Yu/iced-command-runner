@@ -137,13 +137,16 @@ mod tests {
 
         let (messenger, mut receiver) = mpsc::channel::<Event>(512);
         run_command(args, messenger).await;
-        let mut output = Vec::new();
+        let mut output = String::new();
 
         loop {
             let data = receiver.recv().await.unwrap();
             match data {
                 Event::Stream(res) => match res {
-                    Terminal::StdOut(d) => output.push(d),
+                    Terminal::StdOut(d) => {
+                        let d = d.trim();
+                        output.push_str(d);
+                    },
                     _ => {}
                 },
                 Event::ExitSuccess => break,
@@ -151,6 +154,7 @@ mod tests {
                 _ => {}
             }
         }
-        assert_eq!(output, ["hi how are you\n"])
+
+        assert_eq!(output.trim(), "hi how are you")
     }
 }

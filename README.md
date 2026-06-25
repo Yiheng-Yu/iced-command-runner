@@ -19,7 +19,7 @@ Here is the easiest way of doing it:
 
 Add `Event` to your application's `Message`:
 
-```rust
+```rust, ignore
 use iced_command_runner::{
     CommandRunner,
     event::Event
@@ -28,13 +28,13 @@ use iced_command_runner::{
 #[derive(Clone)]
 enum Message {
     Runner(Event),  // used for passing command execution events
-    ..  // the rest of messages in your module
+    ...  // the rest of messages in your module
 }
 ```
 
 Add `CommandRunner`:
 
-```rust
+```rust, ignore
 struct App {
     runner: CommandRunner,
     ..  // the rest of the app
@@ -44,7 +44,7 @@ struct App {
 To init a new `CommandRunner` instance, use `CommandRunner::new` or `create_runner`.
 Example:
 
-```rust
+```rust, ignore
 use iced_command_runner::create_runner;
 
 impl App {
@@ -69,7 +69,7 @@ The `iced_command_runner` module comes with a complimentary helper function `ter
 
 To implement, simply put this in your `App`'s `view`:
 
-```rust
+```rust, ignore
 ...
 let terminal_window = terminal_container(&runner, Message::Runner, "Run", "Clear history")
 .spacing(..)
@@ -92,7 +92,7 @@ Here's a walkthrough of the widgets:
 
 `CommandRunner` impls `crate_view()` method that renders a simulated termianl window that streams termianl output as they got produced:
 
-```rust
+```rust, ignore
 pub fn view<'a>(&'a self) -> Element<'a, Message> {
     ...
     let terminal_window = self.runner.crate_view(
@@ -108,7 +108,7 @@ Command execution is triggered by `Event::Execute`. You need to manually impleme
 
 You can also use the (very handy!) function that comes with `iced_command_runner`, `run_button`:
 
-```rust
+```rust, ignore
 // in your view() function:
 let trigger = run_button(
     widget::text("Run!"),   // or just plain &str
@@ -122,7 +122,7 @@ let trigger = run_button(
 
 `clear_buffer_button()` returns a button that clears history stored in `CommandRunner`:
 
-```rust
+```rust, ignore
 use iced_command_runner::clear_buffer_button;
 ...
     // in your view() function:
@@ -138,7 +138,7 @@ use iced_command_runner::clear_buffer_button;
 
 `iced_command_runner` also comes with another (very handy!! and very beautiful!!) widget that displays current execution status:
 
-```rust
+```rust, ignore
 let status_bar = status_bar::<Message>(&self.runner.status);
 ```
 
@@ -152,7 +152,7 @@ Simply pass `event` back to the runner in your `update()` function, note that:
 
 Example:
 
-```rust
+```rust, ignore
 pub fn update(
     &mut self, 
     message: Message
@@ -175,7 +175,7 @@ Two button functions (`clear_buffer_button` and `run_button`) return an `iced::w
 
 The `CommandRunner` styling is pretty similar too:
 
-```rust
+```rust, ignore
 let runner = create_runner(command, args)
     .prompt("yourname@localhost:")
     .text_size(8.0)
@@ -190,7 +190,7 @@ let runner = create_runner(command, args)
 
 If you don't like currently rendering setups and wishing to render things differently, you can implement your own `view()` functions that renders terminal outputs stored in the `buffer` field:
 
-```rust
+```rust, ignore
 let content: Vec<Element<'_, Message>> = runner.buffer.iter().map(
     |output| {
         match output {
@@ -202,7 +202,6 @@ let content: Vec<Element<'_, Message>> = runner.buffer.iter().map(
         }
     }
     ).collect();
-}
 ```
 
 #### Example use case: stream python's `tqdm` progress bar correctly
@@ -211,7 +210,7 @@ let content: Vec<Element<'_, Message>> = runner.buffer.iter().map(
 
 Assume you had setup your application like this:
 
-```rust
+```rust, ignore
 use iced_command_runner::{
     CommandRunner,
     event::{Event, Terminal}
@@ -220,13 +219,13 @@ use iced_command_runner::{
 #[derive(Clone)]
 enum Message {
     Runner(Event),  // used for passing command execution events
-    ..  // the rest of messages in your module
+    ...  // the rest of messages in your module
 }
 
 // and your app contains `CommandRunner` field called `runner`
 struct App {
     runner: CommandRunner,
-    ..  // the rest of the app
+    ...  // the rest of the app
 }
 ```
 
@@ -234,7 +233,7 @@ struct App {
 
 In your application's `update` function:
 
-```rust
+```rust, ignore
 ...
 match message {
     ...

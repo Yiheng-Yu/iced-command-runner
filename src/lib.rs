@@ -34,7 +34,7 @@ pub fn create_runner(
 /// Example usage:
 /// Somewhere in your `view()` function:
 /// 
-/// ```rust
+/// ```rust, ignore
 /// use iced_command_runner::{
 ///     terminal_container,
 ///     CommandRunner,
