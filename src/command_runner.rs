@@ -194,9 +194,33 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        self.buffer.push(to_push.clone());
+
+        let to_paste: Terminal = if to_push.starts_with_carriage_return() {
+            if self.buffer.len() <=1 {
+                let to_push = to_push.trim();
+                self.buffer.push(to_push.clone());
+                to_push.trim()
+            } else {
+                let to_push = to_push.trim();
+                let length = self.buffer.len().saturating_sub(1);
+                // remove last line in the buffer
+                self.buffer.truncate(length);
+                self.buffer.push(to_push.clone());
+
+                // remove last line in self.content
+                self.content.perform(Action::SelectLine);  // select last line
+                self.content.perform(Action::Edit(Edit::Delete));  // remove
+
+                to_push
+            }
+        } else {
+            self.buffer.push(to_push.clone());
+            to_push
+        };
+
+        // push contents to the text editor
         self.content.perform(
-            Action::Edit(Edit::Paste(to_push.as_str().to_string().into())
+            Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())
         ));
     }
 

@@ -1,5 +1,13 @@
 
-`iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs.
+`iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs. Documentation can be found via links in [Crates.io](https://crates.io/crates/iced_command_runner).
+
+Note that this is still a bit of work-in-progress. Current API is done and won't change (at least too much) in the forseeable future. Yhere might be some small bugs here and there but the crate itself should be functional for majorities of the use case. They will get fixed one by one in my free time.
+
+If you found any issues, please do feel free to [submit them](https://github.com/Yiheng-Yu/iced-command-runner/issues) or do some [pull requests](https://github.com/Yiheng-Yu/iced-command-runner/pulls) on your fixes/ improvements, thanks in advance.
+
+`iced` it self is also in active development. I will try my best to udpate this crate trakcing the most recent stable release of `iced` as soon as I could.
+
+Cheers.
 
 ## Overview
 
@@ -204,52 +212,9 @@ let content: Vec<Element<'_, Message>> = runner.buffer.iter().map(
     ).collect();
 ```
 
-#### Example use case: stream python's `tqdm` progress bar correctly
+#### Carriage return
 
-[tqdm](https://github.com/tqdm/tqdm) is a python package that prints progress bars to the terminal. Instead of running as a separate proess, progress bar in `tqdm` is printed to `stderr` (not `stdout`!) via carriage return `\r`.
-
-Assume you had setup your application like this:
-
-```rust, ignore
-use iced_command_runner::{
-    CommandRunner,
-    event::{Event, Terminal}
-};
-
-#[derive(Clone)]
-enum Message {
-    Runner(Event),  // used for passing command execution events
-    ...  // the rest of messages in your module
-}
-
-// and your app contains `CommandRunner` field called `runner`
-struct App {
-    runner: CommandRunner,
-    ...  // the rest of the app
-}
-```
-
-`event::Terminal` provides a helper function `starts_with_carriage_return` that detects if the termianl output starts with `\r` carriage return. You can add an extra if-else check In your application's `update` function to mimick `\r` behaviour by overwriting the last output in your `buffer`:
-
-In your application's `update` function:
-
-```rust, ignore
-...
-match message {
-    ...
-    Message::Runner(event) => {
-        match event {
-            Event::Stream(output) => {
-                if output.starts_with_carriage_return() {
-                    self.buffer.truncate(self.buffer.len()-1); // remove last item
-                    self.runner.update(event)
-                }
-            },
-            _ => self.runner.update(event)
-        }
-    }
-    ...
-```
+By default, `CommandRunner`'s `update()` function would automatically remove previous message if the new message starts with carriage return (`\r`). This is particularly useful to correctly printing progress bars (like the one in python's `tqdm`). The current solution *works* but not as ideal. Proper handling this is planned for future releases.
 
 ### Redirect terminal output elsewhere
 

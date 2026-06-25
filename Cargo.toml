@@ -12,6 +12,23 @@ exclude = [
     ".gitignore"
 ]
 
+[[example]]
+name = "pbar"
+path = "examples/pbar/src/main.rs"
+
+[[example]]
+name = "custom_layout"
+path = "examples/custom_layout.rs"
+
+[[example]]
+name = "default_layout"
+path = "examples/default_layout.rs"
+
+[[example]]
+name = "multiple_window"
+path = "examples/multiple_window.rs"
+
+
 [profile.release]
 opt-level = 3
 overflow-checks = true

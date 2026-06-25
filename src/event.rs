@@ -51,4 +51,13 @@ impl Terminal {
             Terminal::Error(s) => s.starts_with("\r"),
         }
     }
+
+    pub fn trim(&self) -> Terminal {
+        match self {
+            Terminal::StdIn(data) => Terminal::StdIn(data.trim().to_string()),
+            Terminal::StdOut(data) => Terminal::StdIn(data.trim().to_string()),
+            Terminal::StdErr(data) => Terminal::StdIn(data.trim().to_string()),
+            Terminal::Error(data) => Terminal::StdIn(data.trim().to_string()),
+        }
+    }
 }
