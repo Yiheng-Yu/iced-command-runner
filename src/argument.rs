@@ -47,7 +47,7 @@ pub async fn run_command(to_run: Argument, messenger: mpsc::Sender<Event>) {
     let stdout = match child.stdout.take() {
         Some(data) => data,
         None => {
-            let message = Event::Stream(Terminal::Error(format!("Unable to spawing stdout")));
+            let message = Event::Stream(Terminal::Error("Unable to spawing stdout".to_string()));
             let _ = messenger.send(message).await;
             return;
         }
@@ -56,7 +56,7 @@ pub async fn run_command(to_run: Argument, messenger: mpsc::Sender<Event>) {
     let stderr = match child.stderr.take() {
         Some(data) => data,
         None => {
-            let message = Event::Stream(Terminal::Error(format!("Unable to spawing stderr")));
+            let message = Event::Stream(Terminal::Error("Unable to spawing stderr".to_string()));
             let _ = messenger.send(message).await;
             return;
         }

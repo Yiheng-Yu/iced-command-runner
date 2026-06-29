@@ -474,7 +474,7 @@ impl Default for Style {
 impl Style {
     pub fn calc_height(&self) -> Length {
         let text_size: Pixels = self.text_size.into();
-        let n_lines: Pixels = self.max_lines.into();
+        let n_lines: Pixels = (self.max_lines as f32).into();
         let height_pixels: Pixels = text_size * n_lines;
         Length::from(height_pixels)
     }
@@ -486,7 +486,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_command() {
-        let runner = CommandRunner::new("echo", ["hello!"]);
+        let _ = CommandRunner::new("echo", ["hello!"]);
     }
 
     #[test]
