@@ -68,7 +68,7 @@ where
 
             // need to provide explicit fn type to the compiler
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -88,7 +88,7 @@ where
                 .wrapping(Wrapping::Word);
 
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -103,7 +103,7 @@ where
             let message = text(message).wrapping(Wrapping::Word);
 
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -117,7 +117,7 @@ where
             let message = "Ready".to_string();
             let message = text(message).wrapping(Wrapping::Word);
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.strong.color)),
                     text_color: Some(palette.background.strong.text),
