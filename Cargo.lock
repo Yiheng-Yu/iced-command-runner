@@ -1105,12 +1105,11 @@ dependencies = [
 
 [[package]]
 name = "iced_command_runner"
-version = "0.3.52"
+version = "0.3.53-dev"
 dependencies = [
  "futures",
  "iced",
  "iced_core",
- "iced_runtime",
  "iced_widget",
  "iced_winit",
  "log",
