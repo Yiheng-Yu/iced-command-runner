@@ -91,7 +91,6 @@ let terminal_window = terminal_container(&runner, Message::Runner, "Run", "Clear
 .align_x(..)
 .align_y(..)
 .width(..)
-.height(..);
 ...
 ```
 

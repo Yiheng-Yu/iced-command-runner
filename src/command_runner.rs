@@ -169,9 +169,10 @@ impl CommandRunner {
             .size(self.style.text_size);
 
         // optional render as scrollable
-        match self.style.max_lines {
-            Some(_) => self.wrap_inside_scrollable(editor),
-            None => self.wrap_inside_container(editor),
+        if self.buffer.len() > self.style.max_lines {
+            self.wrap_inside_scrollable(editor)
+        } else {
+            self.wrap_inside_container(editor)
         }
     }
 
@@ -363,14 +364,8 @@ impl CommandRunner {
         self
     }
 
-    pub fn num_lines(mut self, num_lines: u32) -> Self {
-        self.style.max_lines = Some(num_lines);
-        self
-    }
-
-    pub fn height(mut self, length: impl Into<Length>) -> Self {
-        self.style.height = length.into();
-        self.style.max_lines = None;
+    pub fn max_lines(mut self, num_lines: usize) -> Self {
+        self.style.max_lines = num_lines;
         self
     }
 
@@ -389,13 +384,11 @@ pub struct Style {
     pub text_size: f32,
     /// Line height, same as iced::LineHeight::default()
     pub line_height: LineHeight,
-    /// Max number of lines to display in the screen.
-    /// When set, overrides the 'height' attribute and uses line_height x max_lines as the height of the terminal window.
-    pub max_lines: Option<u32>,
+    /// Max number of lines to display in the screen before starting to scroll, 
+    /// this also sets height of the terminal window.
+    pub max_lines: usize,
     /// width of the terminal window
     pub width: Length,
-    /// Height of the terminal window. Overridden by max_lines if it was not None
-    pub height: Length,
     /// background colour for the terminal window
     pub background: fn(&Theme) -> Background,
 
@@ -435,8 +428,7 @@ impl Default for Style {
         Self {
             prompt: format!("{} >", cwd),
             width: Length::Fill,
-            max_lines: Some(12),
-            height: (300.0).into(),
+            max_lines: 12,
             background: |theme| {
                 let palette = theme.extended_palette();
                 Background::Color(palette.background.weakest.color)
@@ -481,15 +473,10 @@ impl Default for Style {
 
 impl Style {
     pub fn calc_height(&self) -> Length {
-        match self.max_lines {
-            Some(n_lines) => {
-                let text_size: Pixels = self.text_size.into();
-                let n_lines: Pixels = n_lines.into();
-                let height_pixels: Pixels = text_size * n_lines;
-                Length::from(height_pixels)
-            }
-            None => self.height,
-        }
+        let text_size: Pixels = self.text_size.into();
+        let n_lines: Pixels = self.max_lines.into();
+        let height_pixels: Pixels = text_size * n_lines;
+        Length::from(height_pixels)
     }
 }
 
