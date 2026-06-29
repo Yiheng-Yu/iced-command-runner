@@ -1,6 +1,6 @@
 [package]
 name = "iced_command_runner"
-version = "0.3.54-dev"
+version = "0.3.55-dev"
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
@@ -41,16 +41,12 @@ lto = true
 futures = "0.3.32"
 
 [patch.crates-io]
-iced_core.git = "https://github.com/iced-rs/iced"
-iced_widget.git = "https://github.com/iced-rs/iced"
-iced_winit.git = "https://github.com/iced-rs/iced"
+iced_core = { git = "https://github.com/iced-rs/iced" }
+iced_widget = { git = "https://github.com/iced-rs/iced" }
+iced_winit = { git = "https://github.com/iced-rs/iced" }
 
 [dependencies]
-iced = { git = "https://github.com/iced-rs/iced", features = [
-    'advanced',
-    'debug',
-    'tokio',
-] }
+iced = { git = "https://github.com/iced-rs/iced", features = ["tokio"]}
 iced_core = { git = "https://github.com/iced-rs/iced" }
 iced_widget = { git = "https://github.com/iced-rs/iced" }
 iced_winit = { git = "https://github.com/iced-rs/iced" }
