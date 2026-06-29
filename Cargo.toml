@@ -38,7 +38,7 @@ strip = true
 lto = true
 
 [dev-dependencies]
-futures = "0.3.32"
+futures = "0.3.33"
 
 
 [dependencies]
