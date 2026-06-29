@@ -1,6 +1,6 @@
 [package]
 name = "iced_command_runner"
-version = "0.3.53-dev"
+version = "0.3.54-dev"
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
@@ -46,7 +46,7 @@ iced_widget.git = "https://github.com/iced-rs/iced"
 iced_winit.git = "https://github.com/iced-rs/iced"
 
 [dependencies]
-iced = { git = "https://github.com/iced-rs/iced.git", features = [
+iced = { git = "https://github.com/iced-rs/iced", features = [
     'advanced',
     'debug',
     'tokio',
