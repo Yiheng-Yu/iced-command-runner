@@ -1195,7 +1195,7 @@ dependencies = [
 
 [[package]]
 name = "iced_command_runner"
-version = "0.3.3"
+version = "0.3.5"
 dependencies = [
  "futures",
  "iced",
