@@ -5,7 +5,7 @@ use crate::{
 };
 
 // rustfmt::skip
-use iced::widget::text_editor; // text_editor::{self, Content} would import text_editor the module instead of text_editor the funciton
+use iced::widget::text_editor;  // rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function
 use iced::{
     Background, Color, Element, Length, Pixels, Task,
     border::Border,
@@ -120,6 +120,11 @@ impl CommandRunner {
     where
         Message: Clone + 'a,
     {
+        // TODO! 
+        // NEED TO SET UP A PROPER SCROLLBAR TO THE TEXT EDITOR
+        // This can be done by:
+        // set customised on_scroll function here, converting scrollable amount to an editor message
+        // pass the scrollable amount to the text editor display in create_view()
         let content: Element<'a, Message> = scrollable(content.into())
             .auto_scroll(true)
             .anchor_bottom()
@@ -132,15 +137,8 @@ impl CommandRunner {
     where
         Message: Clone + 'a,
     {
-        let n_lines = if self.style.max_lines < self.buffer.len() {
-            self.style.max_lines
-        } else {
-            self.buffer.len()
-        };
-
         container(content)
             .width(self.style.width)
-            .height(self.style.calc_height(n_lines))
             .style(|theme| container::Style {
                 background: Some((self.style.background)(theme)),
                 border: self.border_style(theme),
@@ -154,6 +152,17 @@ impl CommandRunner {
     where
         Message: Clone + 'a,
     {   
+        let buffer_size = self.buffer.len();
+
+        let n_lines = if buffer_size < self.style.min_lines {
+            self.style.min_lines
+        } else if buffer_size > self.style.max_lines {
+            self.style.max_lines
+        } else {
+            buffer_size
+        };
+
+        let editor_height = self.style.calc_height(n_lines);
         let editor = text_editor(&self.content)
             .placeholder("")
             .font(self.style.font)
@@ -172,14 +181,11 @@ impl CommandRunner {
                     selection: palette.primary.weak.color,
                 }
             })
+            .height(editor_height)
             .size(self.style.text_size);
 
         // optional render as scrollable
-        if self.buffer.len() > self.style.max_lines {
-            self.wrap_inside_scrollable(editor)
-        } else {
-            self.wrap_inside_container(editor)
-        }
+        self.wrap_inside_container(editor)
     }
 
     // ------------------------------------------------------------------
@@ -202,27 +208,27 @@ impl CommandRunner {
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
 
-        let to_paste: Terminal = if to_push.starts_with_carriage_return() {
-            if self.buffer.len() <=1 {
-                let to_push = to_push.trim();
-                self.buffer.push(to_push.clone());
-                to_push.trim()
-            } else {
-                let to_push = to_push.trim();
-                let length = self.buffer.len().saturating_sub(1);
-                // remove last line in the buffer
-                self.buffer.truncate(length);
-                self.buffer.push(to_push.clone());
+        let to_paste: String = if self.buffer.len() <=1 {
+            let to_push = to_push.trim();
+            self.buffer.push(to_push.clone());
+            to_push.as_str().trim().to_string()
+        } else if to_push.starts_with_carriage_return() {
+            
+            let to_push = to_push.trim();
+            let length = self.buffer.len().saturating_sub(1);
+            // remove last line in the buffer
+            self.buffer.truncate(length);
+            self.buffer.push(to_push.clone());
 
-                // remove last line in self.content
-                self.content.perform(Action::SelectLine);  // select last line
-                self.content.perform(Action::Edit(Edit::Delete));  // remove
+            // remove last line in self.content
+            self.content.perform(Action::SelectLine);  // select last line
+            self.content.perform(Action::Edit(Edit::Delete));  // remove
 
-                to_push
-            }
+            format!("\n{}", to_push.as_str().trim())
+
         } else {
             self.buffer.push(to_push.clone());
-            to_push
+            format!("\n{}", to_push.as_str().trim())
         };
 
         // push contents to the text editor
@@ -430,31 +436,11 @@ pub struct Style {
 
 impl Default for Style {
     fn default() -> Self {
-        // zch-like shell prompt
-        let cwd = std::env::current_dir().unwrap_or_default();
-        let cwd = if cwd.components().count() > 3 {
-            let full_path = std::env::current_dir()
-                .unwrap_or_default()
-                .iter()
-                .rev()
-                .take(3)
-                .map(|s| s.to_str().unwrap_or_default())
-                .collect::<Vec<&str>>()
-                .join("/");
-
-            format!("..{}", full_path)
-        } else {
-            cwd
-            .to_str()
-            .unwrap_or_default()
-            .to_string()
-        };
-        
         Self {
-            prompt: format!("{} >", cwd),
+            prompt: " >".to_string(),
             width: Length::Fill,
             max_lines: 12,
-            min_lines: 1,
+            min_lines: 3,
             background: |theme| {
                 let palette = theme.extended_palette();
                 Background::Color(palette.background.weakest.color)
@@ -499,13 +485,6 @@ impl Default for Style {
 
 impl Style {
     pub fn calc_height(&self, n_lines: usize) -> Length {
-
-        let n_lines = if n_lines < self.min_lines {
-            self.min_lines
-        } else { 
-            n_lines 
-        };
-        
         let text_size: Pixels = self.text_size.into();
         let n_lines: Pixels = (n_lines as f32).into();
         let height_pixels: Pixels = text_size * n_lines;
