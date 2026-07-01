@@ -7,12 +7,32 @@ Links to documentation:
 
 - [Doc for the latest release](https://docs.rs/iced_command_runner/latest/iced_command_runner/)
 
-
 Note that this is still a bit of work-in-progress. Current API is done and won't change (at least too much) in the forseeable future. There might be some small bugs here and there but the crate itself should be functional for majorities of the use case. They will get fixed one by one in my free time.
 
 If you found any issues, please do feel free to [submit them](https://github.com/Yiheng-Yu/iced-command-runner/issues) or do some [pull requests](https://github.com/Yiheng-Yu/iced-command-runner/pulls) on your fixes/ improvements, thanks in advance.
 
-`iced` it self is also in active development. I will try my best to udpate this crate trakcing the most recent stable release of `iced` as soon as I could.
+`iced` it self is also in active development. I will try my best to udpate this crate trakcing the most recent stable release of `iced` as soon as I could. The `dev` branch of `iced_command_runner` on github is tracking  the `dev` build of `iced`, if you want to use this version instead, add this to your `Cargo.toml`:
+
+Add to your `[patch.crates-io]`:
+
+```toml
+[patch.crates-io]
+iced_core = { git = "https://github.com/iced-rs/iced" }
+iced_widget = { git = "https://github.com/iced-rs/iced" }
+iced_winit = { git = "https://github.com/iced-rs/iced" }
+```
+
+..And add this to `[dependencies]`:
+
+```toml
+[dependencies]
+iced = { git = "https://github.com/iced-rs/iced", features = [...] }
+iced_core = { git = "https://github.com/iced-rs/iced" }
+iced_widget = { git = "https://github.com/iced-rs/iced" }
+iced_winit = { git = "https://github.com/iced-rs/iced" }
+
+iced_command_runner = { git = "https://github.com/Yiheng-Yu/iced-command-runner", branch = "dev" }
+```
 
 Cheers.
 
