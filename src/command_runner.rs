@@ -169,7 +169,7 @@ impl CommandRunner {
             .line_height(self.style.line_height)
             .on_action(move |action| on_update(Event::EditorAction(action)))
             .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
-                let palette = theme.palette();
+                let palette = theme.extended_palette();
                 text_editor::Style {
                     background: Background::Color(Color::TRANSPARENT),
                     border: Border {
@@ -442,12 +442,12 @@ impl Default for Style {
             max_lines: 12,
             min_lines: 3,
             background: |theme| {
-                let palette = theme.palette();
+                let palette = theme.extended_palette();
                 Background::Color(palette.background.weakest.color)
             },
 
             border_idle: |theme| {
-                let palette = theme.palette();
+                let palette = theme.extended_palette();
                 Border {
                     color: palette.primary.base.color,
                     width: 1.0,
@@ -455,7 +455,7 @@ impl Default for Style {
                 }
             },
             border_running: |theme| {
-                let palette = theme.palette();
+                let palette = theme.extended_palette();
                 Border {
                     color: palette.primary.base.color,
                     width: 1.5,
@@ -463,7 +463,7 @@ impl Default for Style {
                 }
             },
             border_error: |theme| {
-                let palette = theme.palette();
+                let palette = theme.extended_palette();
                 Border {
                     color: palette.danger.base.color,
                     width: 1.5,

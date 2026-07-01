@@ -56,5 +56,5 @@ impl App {
 
 
 fn new() -> App {
-    App{ runner: create_runner("python", ["pbar/src/tqdm_test.py"]) }
+    App{ runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"]) }
 }
