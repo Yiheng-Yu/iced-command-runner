@@ -1,25 +1,22 @@
-use crate::{
-    Argument,
-    event::{Event, Terminal},
-    run_command,
-};
+use crate::{ Argument, event::{ Event, Terminal }, run_command };
 
 // rustfmt::skip
-use iced::widget::text_editor;  // rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function
+use iced::widget::text_editor; // rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function
 use iced::{
-    Background, Color, Element, Length, Pixels, Task,
+    Background,
+    Color,
+    Element,
+    Length,
+    Pixels,
+    Task,
     border::Border,
-    font::{Family, Font, Stretch, Style as FontStyle, Weight},
+    font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
-    widget::{
-        container, 
-        scrollable, 
-        text::LineHeight, 
-        text_editor::{Content, Action, Edit}
-    },
+    widget::{ container, scrollable, text::LineHeight, text_editor::{ Content, Action, Edit } },
 };
 use log::warn;
+use std::cmp::min;
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -46,18 +43,18 @@ impl Status {
             Status::Failed(_) => false,
             Status::Idle => false,
             Status::Running => true,
-            Status::Initialize => true
+            Status::Initialize => true,
         }
     }
 }
 
 /// CommandRunner that executes terminal command, and stream the output to its buffer.
-/// Instance of CommandRunner itself does not work on its own, as you will need to incorporate it with other iced widgets to make it work. 
-/// 
+/// Instance of CommandRunner itself does not work on its own, as you will need to incorporate it with other iced widgets to make it work.
+///
 /// Example usage:
 /// ```rust, ignore
 /// use iced_command_runner::create_runner;
-/// 
+///
 /// let runner = create_runner::new("echo", ["hiii"])
 /// .text_size(13.0);
 /// ```
@@ -82,7 +79,10 @@ impl CommandRunner {
     /// let runner = CommandRunner::new("echo", ["hiii"])
     /// .text_size(13.0);
     /// ```
-    pub fn new(command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
+    pub fn new(
+        command: impl Into<String>,
+        args: impl IntoIterator<Item = impl Into<String>>
+    ) -> Self {
         Self {
             command: Argument::new(command, args),
             buffer: Vec::new(),
@@ -95,7 +95,7 @@ impl CommandRunner {
     /// create new instace with no empty args
     pub fn new_no_args(command: impl Into<String>) -> Self {
         Self {
-            command: Argument {program: command.into(), args: Vec::new()},
+            command: Argument { program: command.into(), args: Vec::new() },
             buffer: Vec::new(),
             status: Status::Idle,
             style: Style::default(),
@@ -116,11 +116,13 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // Drawing
     // ------------------------------------------------------------------
-    fn wrap_inside_scrollable<'a, Message>(&'a self, content: impl Into<Element<'a, Message>>) -> Element<'a, Message>
-    where
-        Message: Clone + 'a,
+    fn wrap_inside_scrollable<'a, Message>(
+        &'a self,
+        content: impl Into<Element<'a, Message>>
+    ) -> Element<'a, Message>
+        where Message: Clone + 'a
     {
-        // TODO! 
+        // TODO!
         // NEED TO SET UP A PROPER SCROLLBAR TO THE TEXT EDITOR
         // This can be done by:
         // set customised on_scroll function here, converting scrollable amount to an editor message
@@ -133,11 +135,17 @@ impl CommandRunner {
         self.wrap_inside_container(content)
     }
 
-    fn wrap_inside_container<'a, Message>(&'a self, content: impl Into<Element<'a, Message>>) -> Element<'a, Message>
-    where
-        Message: Clone + 'a,
+    fn wrap_inside_container<'a, Message>(
+        &'a self,
+        content: impl Into<Element<'a, Message>>
+    ) -> Element<'a, Message>
+        where Message: Clone + 'a
     {
+        let height = self.style.calc_height(
+            min(self.buffer.len(), self.style.max_lines)
+        );
         container(content)
+            .height(height)
             .width(self.style.width)
             .style(|theme| container::Style {
                 background: Some((self.style.background)(theme)),
@@ -148,10 +156,12 @@ impl CommandRunner {
     }
 
     /// Crates a mocked terminal window to display message received in `self.buffer`
-    pub fn crate_view<'a, Message>(&'a self, on_update: impl Fn(Event) -> Message + 'a) -> Element<'a, Message>
-    where
-        Message: Clone + 'a,
-    {   
+    pub fn crate_view<'a, Message>(
+        &'a self,
+        on_update: impl (Fn(Event) -> Message) + 'a
+    ) -> Element<'a, Message>
+        where Message: Clone + 'a
+    {
         let buffer_size = self.buffer.len();
 
         let n_lines = if buffer_size < self.style.min_lines {
@@ -169,7 +179,7 @@ impl CommandRunner {
             .line_height(self.style.line_height)
             .on_action(move |action| on_update(Event::EditorAction(action)))
             .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 text_editor::Style {
                     background: Background::Color(Color::TRANSPARENT),
                     border: Border {
@@ -192,7 +202,12 @@ impl CommandRunner {
     // Updating internal states
     // ------------------------------------------------------------------
     fn format_command(&self) -> String {
-        format!("{} {} {}\n", &self.style.prompt, &self.command.program, &self.command.args.join(" "))
+        format!(
+            "{} {} {}\n",
+            &self.style.prompt,
+            &self.command.program,
+            &self.command.args.join(" ")
+        )
     }
 
     fn update_editor_content(&mut self) {
@@ -207,13 +222,11 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-
-        let to_paste: String = if self.buffer.len() <=1 {
+        let to_paste: String = if self.buffer.len() <= 1 {
             let to_push = to_push.trim();
             self.buffer.push(to_push.clone());
             to_push.as_str().trim().to_string()
         } else if to_push.starts_with_carriage_return() {
-            
             let to_push = to_push.trim();
             let length = self.buffer.len().saturating_sub(1);
             // remove last line in the buffer
@@ -221,20 +234,17 @@ impl CommandRunner {
             self.buffer.push(to_push.clone());
 
             // remove last line in self.content
-            self.content.perform(Action::SelectLine);  // select last line
-            self.content.perform(Action::Edit(Edit::Delete));  // remove
+            self.content.perform(Action::SelectLine); // select last line
+            self.content.perform(Action::Edit(Edit::Delete)); // remove
 
             format!("\n{}", to_push.as_str().trim())
-
         } else {
             self.buffer.push(to_push.clone());
             format!("\n{}", to_push.as_str().trim())
         };
 
         // push contents to the text editor
-        self.content.perform(
-            Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())
-        ));
+        self.content.perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
     }
 
     fn create_stream(&mut self) -> Task<Event> {
@@ -246,7 +256,7 @@ impl CommandRunner {
     pub fn is_running(&self) -> bool {
         Status::is_running(&self.status)
     }
-    
+
     pub fn update(&mut self, event: Event) -> Task<Event> {
         match event {
             // Start streaming data
@@ -275,7 +285,7 @@ impl CommandRunner {
                     _ => {
                         self.content.perform(action);
                         Task::none()
-                    },
+                    }
                 }
             }
 
@@ -320,7 +330,10 @@ impl CommandRunner {
     /// runner.update(Event::Execute).await; // receives Terminal::StdOut("hi\n")
     /// ```
     pub fn set_args(&mut self, args: impl IntoIterator<Item = impl Into<String>>) {
-        let new_argument = args.into_iter().map(|s| s.into()).collect::<Vec<String>>();
+        let new_argument = args
+            .into_iter()
+            .map(|s| s.into())
+            .collect::<Vec<String>>();
         self.command.args = new_argument;
     }
 
@@ -378,8 +391,8 @@ impl CommandRunner {
 
     pub fn max_lines(mut self, num_lines: usize) -> Self {
         if &num_lines < &self.style.min_lines {
-            panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !")
-        };
+            panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
+        }
 
         self.style.max_lines = num_lines;
         self
@@ -387,8 +400,8 @@ impl CommandRunner {
 
     pub fn min_lines(mut self, num_lines: usize) -> Self {
         if &num_lines > &self.style.max_lines {
-            panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !")
-        };
+            panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
+        }
 
         self.style.min_lines = num_lines;
         self
@@ -409,7 +422,7 @@ pub struct Style {
     pub text_size: f32,
     /// Line height, same as iced::LineHeight::default()
     pub line_height: LineHeight,
-    /// Max number of lines to display in the screen before starting to scroll, 
+    /// Max number of lines to display in the screen before starting to scroll,
     /// this also sets max_height of the terminal window.
     pub max_lines: usize,
 
@@ -433,7 +446,6 @@ pub struct Style {
     pub font: Font,
 }
 
-
 impl Default for Style {
     fn default() -> Self {
         Self {
@@ -442,12 +454,12 @@ impl Default for Style {
             max_lines: 12,
             min_lines: 3,
             background: |theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 Background::Color(palette.background.weakest.color)
             },
 
             border_idle: |theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 Border {
                     color: palette.primary.base.color,
                     width: 1.0,
@@ -455,7 +467,7 @@ impl Default for Style {
                 }
             },
             border_running: |theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 Border {
                     color: palette.primary.base.color,
                     width: 1.5,
@@ -463,7 +475,7 @@ impl Default for Style {
                 }
             },
             border_error: |theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 Border {
                     color: palette.danger.base.color,
                     width: 1.5,
@@ -512,22 +524,22 @@ mod tests {
         assert_eq!(check, true);
 
         let tmp_msg = "".to_string();
-        let _ = runner.update(Event::Stream( Terminal::Error(tmp_msg.clone())) );
+        let _ = runner.update(Event::Stream(Terminal::Error(tmp_msg.clone())));
         assert_eq!(runner.is_running(), true);
         let check = &runner.status != &Status::Idle;
         assert_eq!(check, true);
 
-        let _ = runner.update(Event::Stream( Terminal::StdIn(tmp_msg.clone())) );
+        let _ = runner.update(Event::Stream(Terminal::StdIn(tmp_msg.clone())));
         assert_eq!(runner.is_running(), true);
         let check = &runner.status != &Status::Idle;
         assert_eq!(check, true);
 
-        let _ = runner.update(Event::Stream( Terminal::StdOut(tmp_msg.clone())) );
+        let _ = runner.update(Event::Stream(Terminal::StdOut(tmp_msg.clone())));
         assert_eq!(runner.is_running(), true);
         let check = &runner.status != &Status::Idle;
         assert_eq!(check, true);
 
-        let _ = runner.update(Event::Stream( Terminal::StdErr(tmp_msg.clone())) );
+        let _ = runner.update(Event::Stream(Terminal::StdErr(tmp_msg.clone())));
         assert_eq!(runner.is_running(), true);
         let check = &runner.status != &Status::Idle;
         assert_eq!(check, true);
