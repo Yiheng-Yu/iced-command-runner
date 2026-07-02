@@ -16,6 +16,7 @@ use iced::{
     widget::{ container, scrollable, text::LineHeight, text_editor::{ Content, Action, Edit } },
 };
 use log::warn;
+use std::cmp::min;
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -140,7 +141,11 @@ impl CommandRunner {
     ) -> Element<'a, Message>
         where Message: Clone + 'a
     {
+        let height = self.style.calc_height(
+            min(self.buffer.len(), self.style.max_lines)
+        );
         container(content)
+            .height(height)
             .width(self.style.width)
             .style(|theme| container::Style {
                 background: Some((self.style.background)(theme)),
