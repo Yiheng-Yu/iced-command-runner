@@ -53,7 +53,6 @@ where
         .style(
             |theme, _status| 
             button::primary(theme, button::Status::Disabled)
-            .with_background(Background::Color(iced::Color::TRANSPARENT))
         )
     } else {
         let msg = on_press(Event::ClearBuffer);
@@ -62,7 +61,6 @@ where
         .style(
             |theme, status|
             button::primary(theme, status)
-            .with_background(Background::Color(iced::Color::TRANSPARENT))
         )
     }
 }
