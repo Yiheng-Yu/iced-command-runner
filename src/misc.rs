@@ -55,9 +55,6 @@ where
             button::primary(theme, button::Status::Disabled)
             .with_background(Background::Color(iced::Color::TRANSPARENT))
         )
-        .padding(0.0)
-        .width(iced::Length::Fill)
-        .height(iced::Length::Fill)
     } else {
         let msg = on_press(Event::ClearBuffer);
         button(content)
@@ -67,9 +64,6 @@ where
             button::primary(theme, status)
             .with_background(Background::Color(iced::Color::TRANSPARENT))
         )
-        .padding(0.0)
-        .width(iced::Length::Fill)
-        .height(iced::Length::Fill)
     }
 }
 
