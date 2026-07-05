@@ -43,11 +43,20 @@ where
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
         button(content)
-        .style(|theme, _status| button::primary(theme, button::Status::Disabled))
+        .style(
+            |theme, _status| 
+            button::primary(theme, button::Status::Disabled)
+            .with_background(Background::Color(iced::Color::TRANSPARENT))
+        )
     } else {
         let msg = on_press(Event::ClearBuffer);
         button(content)
         .on_press(msg)
+        .style(
+            |theme, status|
+            button::primary(theme, status)
+            .with_background(Background::Color(iced::Color::TRANSPARENT))
+        )
     }
 }
 
