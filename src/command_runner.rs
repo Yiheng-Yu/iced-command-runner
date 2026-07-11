@@ -13,10 +13,10 @@ use iced::{
     font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
-    widget::{ container, scrollable, text::LineHeight, text_editor::{ Content, Action, Edit } },
+    widget::{ container, scrollable, column, text, text::LineHeight, text_editor::{ Content, Action, Edit } },
 };
 use log::warn;
-use std::cmp::{max, min};
+use std::cmp::{ max, min };
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -116,42 +116,6 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // Drawing
     // ------------------------------------------------------------------
-    fn wrap_inside_scrollable<'a, Message>(
-        &'a self,
-        content: impl Into<Element<'a, Message>>
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
-    {
-        // TODO!
-        // NEED TO SET UP A PROPER SCROLLBAR TO THE TEXT EDITOR
-        // This can be done by:
-        // set customised on_scroll function here, converting scrollable amount to an editor message
-        // pass the scrollable amount to the text editor display in create_view()
-        let content: Element<'a, Message> = scrollable(content.into())
-            .auto_scroll(true)
-            .anchor_bottom()
-            .into();
-
-        self.wrap_inside_container(content)
-    }
-
-    fn wrap_inside_container<'a, Message>(
-        &'a self,
-        content: impl Into<Element<'a, Message>>
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
-    {
-        container(content)
-            .height(Length::Shrink)
-            .width(self.style.width)
-            .style(|theme| container::Style {
-                background: Some((self.style.background)(theme)),
-                border: self.border_style(theme),
-                ..Default::default()
-            })
-            .into()
-    }
-
     /// Crates a mocked terminal window to display message received in `self.buffer`
     pub fn crate_view<'a, Message>(
         &'a self,
@@ -159,43 +123,11 @@ impl CommandRunner {
     ) -> Element<'a, Message>
         where Message: Clone + 'a
     {
-        let buffer_size = self.buffer.len();
-
-        let n_lines = if buffer_size < self.style.min_lines {
-            self.style.min_lines
-        } else if buffer_size > self.style.max_lines {
-            self.style.max_lines
+        if self.style.selectable_text {
+            selectable_terminal_window(&self, on_update)
         } else {
-            buffer_size
-        };
-
-        let n_lines = max(self.style.min_lines, self.buffer.len());
-        let n_lines = min(n_lines, self.style.max_lines);
-        let editor_height = self.style.calc_height(n_lines);
-        
-        let editor = text_editor(&self.content)
-            .placeholder("")
-            .font(self.style.font)
-            .line_height(self.style.line_height)
-            .on_action(move |action| on_update(Event::EditorAction(action)))
-            .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
-                let palette = theme.palette();
-                text_editor::Style {
-                    background: Background::Color(Color::TRANSPARENT),
-                    border: Border {
-                        width: 0.0,
-                        ..Default::default()
-                    },
-                    placeholder: palette.secondary.base.color,
-                    value: palette.background.base.text,
-                    selection: palette.primary.weak.color,
-                }
-            })
-            .height(editor_height)
-            .size(self.style.text_size);
-
-        // optional render as scrollable
-        self.wrap_inside_container(editor)
+            plain_terminal_window(&self)
+        }
     }
 
     // ------------------------------------------------------------------
@@ -340,7 +272,8 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // styling
     // ------------------------------------------------------------------
-    fn border_style(&self, theme: &Theme) -> Border {
+    /// creates different borders based on current state of the runner
+    pub fn dynamic_border(&self, theme: &Theme) -> Border {
         match self.status {
             Status::Idle => (self.style.border_idle)(theme),
             Status::Initialize => (self.style.border_running)(theme),
@@ -356,6 +289,11 @@ impl CommandRunner {
 
     pub fn background(mut self, background_fn: fn(&Theme) -> Background) -> Self {
         self.style.background = background_fn.into();
+        self
+    }
+
+    pub fn selectable_text(mut self, is_selectable: bool) -> Self {
+        self.style.selectable_text = is_selectable;
         self
     }
 
@@ -436,6 +374,11 @@ pub struct Style {
     /// background colour for the terminal window
     pub background: fn(&Theme) -> Background,
 
+    /// toggle on/ off for rendering selectable/ non-selectable terminal window
+    /// because currently rendered iced::widget::text is not selectable,
+    /// uses text_editor widget instead when selectable_text as 'true'
+    pub selectable_text: bool,
+
     /// widget border when CommandRunner.status is Status::Idle (ready to run)
     pub border_idle: fn(&Theme) -> Border,
     /// widget border when CommandRunner is running commands
@@ -457,7 +400,7 @@ impl Default for Style {
                 let palette = theme.palette();
                 Background::Color(palette.background.weakest.color)
             },
-
+            selectable_text: true,
             border_idle: |theme| {
                 let palette = theme.palette();
                 Border {
@@ -502,6 +445,80 @@ impl Style {
         let height_pixels: Pixels = text_size * n_lines;
         Length::from(height_pixels)
     }
+}
+
+
+pub fn selectable_terminal_window<'a, Message>(
+    runner: &'a CommandRunner,
+    on_update: impl (Fn(Event) -> Message) + 'a
+) -> Element<'a, Message>
+    where Message: Clone + 'a
+{
+    let n_lines = max(runner.style.min_lines, runner.buffer.len());
+    let n_lines = min(n_lines, runner.style.max_lines);
+    let editor_height = runner.style.calc_height(n_lines);
+
+    let editor = text_editor(&runner.content)
+        .placeholder("")
+        .font(runner.style.font)
+        .line_height(runner.style.line_height)
+        .on_action(move |action| on_update(Event::EditorAction(action)))
+        .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
+            let palette = theme.palette();
+            text_editor::Style {
+                background: Background::Color(Color::TRANSPARENT),
+                border: Border {
+                    width: 0.0,
+                    ..Default::default()
+                },
+                placeholder: palette.secondary.base.color,
+                value: palette.background.base.text,
+                selection: palette.primary.weak.color,
+            }
+        })
+        .height(editor_height)
+        .size(runner.style.text_size);
+
+    let content = scrollable(editor)
+        .auto_scroll(true)
+        .anchor_bottom();
+
+    container(content)
+        .height(Length::Shrink)
+        .width(runner.style.width)
+        .style(|theme| container::Style {
+            background: Some((runner.style.background)(theme)),
+            border: runner.dynamic_border(theme),
+            ..Default::default()
+        })
+        .into()
+
+}
+
+pub fn plain_terminal_window<'a, Message>(
+    runner: &'a CommandRunner,
+) -> Element<'a, Message>
+    where Message: Clone + 'a
+{
+    let font = runner.style.font;
+    let text_size = runner.style.text_size;
+    let line_height = runner.style.line_height;
+    let content = runner.buffer.iter().map(
+        |data| text(data.as_str()).font(font).size(text_size).line_height(line_height).into()
+    );
+
+    let content = column(content)
+    .spacing(1.0);
+
+    container(content)
+        .height(Length::Shrink)
+        .width(runner.style.width)
+        .style(|theme| container::Style {
+            background: Some((runner.style.background)(theme)),
+            border: runner.dynamic_border(theme),
+            ..Default::default()
+        })
+        .into()
 }
 
 #[cfg(test)]
