@@ -41,7 +41,7 @@ lto = true
 futures = "0.3.32"
 
 [patch.crates-io]
-iced_core = { git = "https://github.com/iced-rs/iced" }
+iced_core = { version = "0.15.0-dev", git = "https://github.com/iced-rs/iced" }
 iced_widget = { git = "https://github.com/iced-rs/iced" }
 iced_winit = { git = "https://github.com/iced-rs/iced" }
 
