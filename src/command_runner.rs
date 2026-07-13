@@ -518,7 +518,7 @@ where
     let content = scrollable(content)
         .height(max_height)
         .width(Length::Fill)
-        .spacing(1.5)
+        .spacing(2.0)
         .direction(scrollable::Direction::Both {
             vertical: scrollable::Scrollbar::default(),
             horizontal: scrollable::Scrollbar::default(),
@@ -528,6 +528,7 @@ where
     container(content)
         .height(Length::Shrink)
         .width(runner.style.width)
+        .padding(2.0)
         .style(|theme| container::Style {
             background: Some((runner.style.background)(theme)),
             border: runner.dynamic_border(theme),
