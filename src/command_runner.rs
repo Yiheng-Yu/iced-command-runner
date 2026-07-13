@@ -13,7 +13,13 @@ use iced::{
     font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
-    widget::{ container, scrollable, column, text, text::LineHeight, text_editor::{ Content, Action, Edit } },
+    widget::{
+        container,
+        scrollable,
+        text,
+        text::LineHeight,
+        text_editor::{ Content, Action, Edit },
+    },
 };
 use log::warn;
 use std::cmp::{ max, min };
@@ -447,7 +453,6 @@ impl Style {
     }
 }
 
-
 pub fn selectable_terminal_window<'a, Message>(
     runner: &'a CommandRunner,
     on_update: impl (Fn(Event) -> Message) + 'a
@@ -479,9 +484,7 @@ pub fn selectable_terminal_window<'a, Message>(
         .height(editor_height)
         .size(runner.style.text_size);
 
-    let content = scrollable(editor)
-        .auto_scroll(true)
-        .anchor_bottom();
+    let content = scrollable(editor).auto_scroll(true).anchor_bottom();
 
     container(content)
         .height(Length::Shrink)
@@ -492,23 +495,34 @@ pub fn selectable_terminal_window<'a, Message>(
             ..Default::default()
         })
         .into()
-
 }
 
-pub fn plain_terminal_window<'a, Message>(
-    runner: &'a CommandRunner,
-) -> Element<'a, Message>
+pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<'a, Message>
     where Message: Clone + 'a
 {
     let font = runner.style.font;
     let text_size = runner.style.text_size;
     let line_height = runner.style.line_height;
-    let content = runner.buffer.iter().map(
-        |data| text(data.as_str()).font(font).size(text_size).line_height(line_height).into()
-    );
 
-    let content = column(content)
-    .spacing(1.0);
+    let n_lines = max(runner.style.min_lines, runner.buffer.len());
+    let n_lines = min(n_lines, runner.style.max_lines);
+    let max_height = runner.style.calc_height(n_lines);
+
+    let content = text(runner.content.text())
+        .font(font)
+        .size(text_size)
+        .line_height(line_height);
+
+    // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
+    let content = scrollable(content)
+        .height(max_height)
+        .width(Length::Fill)
+        .spacing(1.5)
+        .direction(scrollable::Direction::Both {
+            vertical: scrollable::Scrollbar::default(),
+            horizontal: scrollable::Scrollbar::default(),
+        })
+        .anchor_bottom();
 
     container(content)
         .height(Length::Shrink)
