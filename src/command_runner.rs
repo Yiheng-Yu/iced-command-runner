@@ -452,8 +452,18 @@ pub fn selectable_terminal_window<'a, Message>(
 ) -> Element<'a, Message>
 where
     Message: Clone + 'a,
-{
-    let n_lines = max(runner.style.min_lines, runner.buffer.len());
+{   
+    if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
+        return iced::widget::space().height(0.0).width(0.0).into()
+    }
+
+    // a string styling thingy:
+    // when there was just 1 line to print
+    // horizontal scrollbar WILL COVER that one single line, if it gets shown
+    // to disable this we'd also need to make this a special case
+    let n_lines = runner.buffer.len();
+    let n_lines = if n_lines == 1 { 2 } else {n_lines};
+    let n_lines = max(runner.style.min_lines, n_lines);
     let n_lines = min(n_lines, runner.style.max_lines);
     let editor_height = runner.style.calc_height(n_lines);
 
