@@ -155,9 +155,9 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        let to_paste: String = if self.buffer.len() <= 1 {
+        let to_paste: String = if self.buffer.len() == 0 {
             self.buffer.push(to_push.clone());
-            to_push.as_str().to_string()
+            to_push.as_str().trim().to_string()
         } else if to_push.starts_with_carriage_return() {
             let to_push = to_push.trim();
             let length = self.buffer.len().saturating_sub(1);
@@ -168,8 +168,8 @@ impl CommandRunner {
             // remove last line in self.content
             self.content.perform(Action::SelectLine); // select last line
             self.content.perform(Action::Edit(Edit::Delete)); // remove
-
             format!("\n{}", to_push.as_str().trim())
+
         } else {
             self.buffer.push(to_push.clone());
             format!("\n{}", to_push.as_str().trim())
@@ -515,20 +515,33 @@ where
     let content = text(runner.content.text())
         .font(font)
         .size(text_size)
-        .line_height(line_height);
+        .line_height(line_height)
+        .wrapping(iced_core::text::Wrapping::Word);
 
-    let content = container(content).padding(iced::Padding {
-        top: 3.0,
-        right: 1.0,
-        bottom: runner.style.text_size, // so horizontal won't overlay text
-        left: 1.0,
-    });
-
+    
     // Horizontal scrollbars in iced::scrollable blocks last line of text
     // if there's only 1 line to display & no vertical scrollbar
-    // so the actual min_lines for scrollable to work would be 2
+    // so the actual min_lines for scrollable to work would be 3
     // if in future this gets fixed then uhh yeah would save a lot of effort
-    let current_buffer_size = max(runner.buffer.len(), 2);
+    // (p.s: setting spacing() for horizontal bars also DOES NOT WORK) 
+    let current_buffer_size = runner.buffer.len();
+    
+    let bottom_padding = if current_buffer_size <= 3 {
+        runner.style.text_size * (1.0 + 0.25 * current_buffer_size as f32)
+    } else {
+        runner.style.text_size * 0.75
+    };
+
+    let content = container(content)
+    .height(Length::Shrink)
+    .width(Length::Fill)
+    .padding(iced::Padding {
+        top: 3.0,
+        right: 1.0,
+        bottom: bottom_padding, // bottom_padding, // so horizontal won't overlay text
+        left: 1.0,
+    });
+    
     let content = if current_buffer_size > runner.style.max_lines {
         let n_lines = max(runner.style.min_lines, current_buffer_size);
         let n_lines = min(n_lines, runner.style.max_lines);
