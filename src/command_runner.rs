@@ -156,9 +156,8 @@ impl CommandRunner {
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
         let to_paste: String = if self.buffer.len() <= 1 {
-            let to_push = to_push.trim();
             self.buffer.push(to_push.clone());
-            to_push.as_str().trim().to_string()
+            to_push.as_str().to_string()
         } else if to_push.starts_with_carriage_return() {
             let to_push = to_push.trim();
             let length = self.buffer.len().saturating_sub(1);
@@ -542,7 +541,7 @@ where
         let max_height = runner.style.calc_height(current_buffer_size);
         scrollable::Scrollable::with_direction(
             content,
-            scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0))
+            scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0)),
         )
         .height(max_height)
         .width(Length::Fill)
