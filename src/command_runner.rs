@@ -522,7 +522,7 @@ where
     });
 
     let current_buffer_size = runner.buffer.len();
-    let content: Element<'a, Message> = if current_buffer_size > runner.style.max_lines {
+    let content = if current_buffer_size > runner.style.max_lines {
         let n_lines = max(runner.style.min_lines, current_buffer_size);
         let n_lines = min(n_lines, runner.style.max_lines);
         let max_height = runner.style.calc_height(n_lines);
@@ -538,9 +538,15 @@ where
         .width(Length::Fill)
         .auto_scroll(true)
         .anchor_bottom()
-        .into()
     } else {
-        content.into()
+        let max_height = runner.style.calc_height(current_buffer_size);
+        scrollable::Scrollable::with_direction(
+            content,
+            scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0))
+        )
+        .height(max_height)
+        .width(Length::Fill)
+        .auto_scroll(false)
     };
 
     container(content)
