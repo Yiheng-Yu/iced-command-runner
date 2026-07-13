@@ -440,7 +440,7 @@ impl Style {
     pub fn calc_height(&self, n_lines: usize) -> Length {
         let text_size: Pixels = self.text_size.into();
         let n_lines: Pixels = (n_lines as f32).into();
-        let height_pixels: Pixels = text_size * n_lines; // some padding so that the scrollbar won't block the bottom of the text
+        let height_pixels: Pixels = text_size * n_lines;
         Length::from(height_pixels)
     }
 }
@@ -504,6 +504,10 @@ pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<
 where
     Message: Clone + 'a,
 {
+    if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
+        return iced::widget::space().height(0.0).into()
+    };
+
     let font = runner.style.font;
     let text_size = runner.style.text_size;
     let line_height = runner.style.line_height;
@@ -520,7 +524,11 @@ where
         left: 1.0,
     });
 
-    let current_buffer_size = runner.buffer.len();
+    // Horizontal scrollbars in iced::scrollable blocks last line of text
+    // if there's only 1 line to display & no vertical scrollbar
+    // so the actual min_lines for scrollable to work would be 2
+    // if in future this gets fixed then uhh yeah would save a lot of effort
+    let current_buffer_size = max(runner.buffer.len(), 2);
     let content = if current_buffer_size > runner.style.max_lines {
         let n_lines = max(runner.style.min_lines, current_buffer_size);
         let n_lines = min(n_lines, runner.style.max_lines);
