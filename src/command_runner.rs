@@ -441,7 +441,7 @@ impl Style {
     pub fn calc_height(&self, n_lines: usize) -> Length {
         let text_size: Pixels = self.text_size.into();
         let n_lines: Pixels = (n_lines as f32).into();
-        let height_pixels: Pixels = text_size * n_lines;
+        let height_pixels: Pixels = text_size * n_lines;  // some padding so that the scrollbar won't block the bottom of the text
         Length::from(height_pixels)
     }
 }
@@ -507,23 +507,25 @@ where
         .font(font)
         .size(text_size)
         .line_height(line_height);
+
     let content = container(content).padding(iced::Padding {
         top: 3.0,
         right: 1.0,
-        bottom: 3.0,
+        bottom: runner.style.text_size,  // so horizontal won't overlay text
         left: 1.0,
     });
 
     // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
-    let content = scrollable(content)
-        .height(max_height)
-        .width(Length::Fill)
-        .spacing(2.0)
-        .direction(scrollable::Direction::Both {
-            vertical: scrollable::Scrollbar::default(),
-            horizontal: scrollable::Scrollbar::default(),
-        })
-        .anchor_bottom();
+    let content = scrollable::Scrollable::with_direction(
+        content,
+        scrollable::Direction::Both {
+            vertical: scrollable::Scrollbar::default().margin(0.0),
+            horizontal: scrollable::Scrollbar::default().margin(0.0),
+        },
+    )
+    .height(max_height)
+    .width(Length::Fill)
+    .anchor_bottom();
 
     container(content)
         .height(Length::Shrink)

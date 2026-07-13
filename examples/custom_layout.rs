@@ -20,7 +20,8 @@ struct App {
 impl App {
     pub fn new() -> Self {
         Self {
-            runner: create_runner("echo", [""]).selectable_text(false),
+            runner: create_runner("echo", [""])
+            .selectable_text(false),
             to_echo: String::new(),
         }
     }
@@ -36,11 +37,11 @@ impl App {
         .align_y(iced::alignment::Vertical::Center)
         .width(iced::Length::Fill);
 
-        let terminal_window1 = widget::container(self.runner.crate_view(Message::Runner)).width(iced::Length::Fill);
+        let terminal_window1 = self.runner.crate_view(Message::Runner);
 
-        let terminal_window2 = widget::container(self.runner.crate_view(Message::Runner)).width(iced::Length::Fill);
+        let terminal_window2 = self.runner.crate_view(Message::Runner);
 
-        let terminal_window3 = widget::container(self.runner.crate_view(Message::Runner)).width(iced::Length::Fill);
+        let terminal_window3 = self.runner.crate_view(Message::Runner);
 
         let status_bar = status_bar(&self.runner.status);
 
