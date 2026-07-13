@@ -22,9 +22,7 @@ where
         button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::Execute);
-        button(content)
-            .on_press(msg)
-            .style(button::primary)
+        button(content).on_press(msg).style(button::primary)
     }
 }
 
@@ -44,9 +42,7 @@ where
         button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::ClearBuffer);
-        button(content)
-            .on_press(msg)
-            .style(button::primary)
+        button(content).on_press(msg).style(button::primary)
     }
 }
 

@@ -441,7 +441,7 @@ impl Style {
     pub fn calc_height(&self, n_lines: usize) -> Length {
         let text_size: Pixels = self.text_size.into();
         let n_lines: Pixels = (n_lines as f32).into();
-        let height_pixels: Pixels = text_size * n_lines;  // some padding so that the scrollbar won't block the bottom of the text
+        let height_pixels: Pixels = text_size * n_lines; // some padding so that the scrollbar won't block the bottom of the text
         Length::from(height_pixels)
     }
 }
@@ -452,9 +452,9 @@ pub fn selectable_terminal_window<'a, Message>(
 ) -> Element<'a, Message>
 where
     Message: Clone + 'a,
-{   
-    if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
-        return iced::widget::space().height(0.0).width(0.0).into()
+{
+    if runner.buffer.is_empty() && runner.style.min_lines == 0 {
+        return iced::widget::space().height(0.0).width(0.0).into();
     }
 
     // a string styling thingy:
@@ -462,7 +462,7 @@ where
     // horizontal scrollbar WILL COVER that one single line, if it gets shown
     // to disable this we'd also need to make this a special case
     let n_lines = runner.buffer.len();
-    let n_lines = if n_lines == 1 { 2 } else {n_lines};
+    let n_lines = if n_lines == 1 { 2 } else { n_lines };
     let n_lines = max(runner.style.min_lines, n_lines);
     let n_lines = min(n_lines, runner.style.max_lines);
     let editor_height = runner.style.calc_height(n_lines);
@@ -509,10 +509,6 @@ where
     let text_size = runner.style.text_size;
     let line_height = runner.style.line_height;
 
-    let n_lines = max(runner.style.min_lines, runner.buffer.len());
-    let n_lines = min(n_lines, runner.style.max_lines);
-    let max_height = runner.style.calc_height(n_lines);
-
     let content = text(runner.content.text())
         .font(font)
         .size(text_size)
@@ -521,21 +517,31 @@ where
     let content = container(content).padding(iced::Padding {
         top: 3.0,
         right: 1.0,
-        bottom: runner.style.text_size,  // so horizontal won't overlay text
+        bottom: runner.style.text_size, // so horizontal won't overlay text
         left: 1.0,
     });
 
-    // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
-    let content = scrollable::Scrollable::with_direction(
-        content,
-        scrollable::Direction::Both {
-            vertical: scrollable::Scrollbar::default().margin(0.0),
-            horizontal: scrollable::Scrollbar::default().margin(0.0),
-        },
-    )
-    .height(max_height)
-    .width(Length::Fill)
-    .anchor_bottom();
+    let current_buffer_size = runner.buffer.len();
+    let content: Element<'a, Message> = if current_buffer_size > runner.style.max_lines {
+        let n_lines = max(runner.style.min_lines, current_buffer_size);
+        let n_lines = min(n_lines, runner.style.max_lines);
+        let max_height = runner.style.calc_height(n_lines);
+        // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
+        scrollable::Scrollable::with_direction(
+            content,
+            scrollable::Direction::Both {
+                vertical: scrollable::Scrollbar::default().margin(0.0),
+                horizontal: scrollable::Scrollbar::default().margin(0.0),
+            },
+        )
+        .height(max_height)
+        .width(Length::Fill)
+        .auto_scroll(true)
+        .anchor_bottom()
+        .into()
+    } else {
+        content.into()
+    };
 
     container(content)
         .height(Length::Shrink)

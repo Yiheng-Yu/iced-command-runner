@@ -20,8 +20,7 @@ struct App {
 impl App {
     pub fn new() -> Self {
         Self {
-            runner: create_runner("echo", [""])
-            .selectable_text(false),
+            runner: create_runner("echo", [""]).selectable_text(false),
             to_echo: String::new(),
         }
     }
