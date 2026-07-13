@@ -1,28 +1,25 @@
-use crate::{ Argument, event::{ Event, Terminal }, run_command };
+use crate::{
+    Argument,
+    event::{Event, Terminal},
+    run_command,
+};
 
 // rustfmt::skip
-use iced::widget::text_editor; // rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function
+use iced::widget::text_editor; /* rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function */
 use iced::{
-    Background,
-    Color,
-    Element,
-    Length,
-    Pixels,
-    Task,
+    Background, Color, Element, Length, Pixels, Task,
     border::Border,
-    font::{ Family, Font, Stretch, Style as FontStyle, Weight },
+    font::{Family, Font, Stretch, Style as FontStyle, Weight},
     stream::channel,
     theme::Theme,
     widget::{
-        container,
-        scrollable,
-        text,
+        container, scrollable, text,
         text::LineHeight,
-        text_editor::{ Content, Action, Edit },
+        text_editor::{Action, Content, Edit},
     },
 };
 use log::warn;
-use std::cmp::{ max, min };
+use std::cmp::{max, min};
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -85,10 +82,7 @@ impl CommandRunner {
     /// let runner = CommandRunner::new("echo", ["hiii"])
     /// .text_size(13.0);
     /// ```
-    pub fn new(
-        command: impl Into<String>,
-        args: impl IntoIterator<Item = impl Into<String>>
-    ) -> Self {
+    pub fn new(command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
         Self {
             command: Argument::new(command, args),
             buffer: Vec::new(),
@@ -101,7 +95,10 @@ impl CommandRunner {
     /// create new instace with no empty args
     pub fn new_no_args(command: impl Into<String>) -> Self {
         Self {
-            command: Argument { program: command.into(), args: Vec::new() },
+            command: Argument {
+                program: command.into(),
+                args: Vec::new(),
+            },
             buffer: Vec::new(),
             status: Status::Idle,
             style: Style::default(),
@@ -123,16 +120,14 @@ impl CommandRunner {
     // Drawing
     // ------------------------------------------------------------------
     /// Crates a mocked terminal window to display message received in `self.buffer`
-    pub fn crate_view<'a, Message>(
-        &'a self,
-        on_update: impl (Fn(Event) -> Message) + 'a
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
+    pub fn crate_view<'a, Message>(&'a self, on_update: impl (Fn(Event) -> Message) + 'a) -> Element<'a, Message>
+    where
+        Message: Clone + 'a,
     {
         if self.style.selectable_text {
-            selectable_terminal_window(&self, on_update)
+            selectable_terminal_window(self, on_update)
         } else {
-            plain_terminal_window(&self)
+            plain_terminal_window(self)
         }
     }
 
@@ -142,9 +137,9 @@ impl CommandRunner {
     fn format_command(&self) -> String {
         format!(
             "{} {} {}\n",
-            &self.style.prompt,
-            &self.command.program,
-            &self.command.args.join(" ")
+            self.style.prompt,
+            self.command.program,
+            self.command.args.join(" ")
         )
     }
 
@@ -152,7 +147,7 @@ impl CommandRunner {
         let mut content: Vec<String> = Vec::new();
         for msg in self.buffer.iter() {
             match msg {
-                Terminal::StdIn(msg) => content.push(format!("{} {}", &self.style.prompt, msg)),
+                Terminal::StdIn(msg) => content.push(format!("{} {}", self.style.prompt, msg)),
                 _ => content.push(msg.as_str().to_string()),
             }
         }
@@ -182,7 +177,8 @@ impl CommandRunner {
         };
 
         // push contents to the text editor
-        self.content.perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
+        self.content
+            .perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
     }
 
     fn create_stream(&mut self) -> Task<Event> {
@@ -268,10 +264,7 @@ impl CommandRunner {
     /// runner.update(Event::Execute).await; // receives Terminal::StdOut("hi\n")
     /// ```
     pub fn set_args(&mut self, args: impl IntoIterator<Item = impl Into<String>>) {
-        let new_argument = args
-            .into_iter()
-            .map(|s| s.into())
-            .collect::<Vec<String>>();
+        let new_argument = args.into_iter().map(|s| s.into()).collect::<Vec<String>>();
         self.command.args = new_argument;
     }
 
@@ -334,7 +327,7 @@ impl CommandRunner {
     }
 
     pub fn max_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines < &self.style.min_lines {
+        if num_lines < self.style.min_lines {
             panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
         }
 
@@ -343,7 +336,7 @@ impl CommandRunner {
     }
 
     pub fn min_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines > &self.style.max_lines {
+        if num_lines > self.style.max_lines {
             panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
         }
 
@@ -455,9 +448,10 @@ impl Style {
 
 pub fn selectable_terminal_window<'a, Message>(
     runner: &'a CommandRunner,
-    on_update: impl (Fn(Event) -> Message) + 'a
+    on_update: impl (Fn(Event) -> Message) + 'a,
 ) -> Element<'a, Message>
-    where Message: Clone + 'a
+where
+    Message: Clone + 'a,
 {
     let n_lines = max(runner.style.min_lines, runner.buffer.len());
     let n_lines = min(n_lines, runner.style.max_lines);
@@ -498,7 +492,8 @@ pub fn selectable_terminal_window<'a, Message>(
 }
 
 pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<'a, Message>
-    where Message: Clone + 'a
+where
+    Message: Clone + 'a,
 {
     let font = runner.style.font;
     let text_size = runner.style.text_size;
@@ -512,6 +507,12 @@ pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<
         .font(font)
         .size(text_size)
         .line_height(line_height);
+    let content = container(content).padding(iced::Padding {
+        top: 3.0,
+        right: 1.0,
+        bottom: 3.0,
+        left: 1.0,
+    });
 
     // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
     let content = scrollable(content)

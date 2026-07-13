@@ -6,7 +6,7 @@ use iced::{
 };
 use iced_core::text::Wrapping;
 
-/// button that sends `Event::Execute` message when pressed. 
+/// button that sends `Event::Execute` message when pressed.
 /// Passing `Event::Execute`` to `CommandRunner.update()` triggers command execution and output streaming
 /// This function is intended to use inside the `view()` function of your application.
 pub fn run_button<'a, Message>(
@@ -19,24 +19,16 @@ where
 {
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
-        button(content)
-        .style(
-            |theme, _status| 
-            button::primary(theme, button::Status::Disabled)
-        )
+        button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::Execute);
         button(content)
-        .on_press(msg)
-        .style(
-            |theme, status|
-            button::primary(theme, status)
-        )
+            .on_press(msg)
+            .style(button::primary)
     }
 }
 
-
-/// button that sends `Event::ClearBuffer` message when pressed. 
+/// button that sends `Event::ClearBuffer` message when pressed.
 /// Passing `Event::ClearBuffer`` to `CommandRunner.update()` removes all buffer stored in the `CommandRunner` instance
 /// This function is intended to use inside the `view()` function of your application.
 pub fn clear_buffer_button<'a, Message>(
@@ -49,19 +41,12 @@ where
 {
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
-        button(content)
-        .style(
-            |theme, _status| 
-            button::primary(theme, button::Status::Disabled)
-        )
+        button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::ClearBuffer);
         button(content)
-        .on_press(msg)
-        .style(
-            |theme, status|
-            button::primary(theme, status)
-        )
+            .on_press(msg)
+            .style(button::primary)
     }
 }
 

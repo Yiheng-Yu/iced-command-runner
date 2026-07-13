@@ -146,7 +146,7 @@ mod tests {
                     Terminal::StdOut(d) => {
                         let d = d.trim();
                         output.push_str(d);
-                    },
+                    }
                     _ => {}
                 },
                 Event::ExitSuccess => break,
