@@ -65,8 +65,8 @@ where
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
                 let palette = theme.palette();
                 container::Style {
-                    background: Some(Background::Color(palette.background.stronger.color)),
-                    text_color: Some(palette.background.stronger.text),
+                    background: Some(Background::Color(palette.primary)),
+                    text_color: None,
                     ..Default::default()
                 }
             };
@@ -85,8 +85,8 @@ where
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
                 let palette = theme.palette();
                 container::Style {
-                    background: Some(Background::Color(palette.background.stronger.color)),
-                    text_color: Some(palette.background.stronger.text),
+                    background: Some(Background::Color(palette.primary)),
+                    text_color: None,
                     ..Default::default()
                 }
             };
@@ -100,8 +100,8 @@ where
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
                 let palette = theme.palette();
                 container::Style {
-                    background: Some(Background::Color(palette.background.stronger.color)),
-                    text_color: Some(palette.background.stronger.text),
+                    background: Some(Background::Color(palette.primary)),
+                    text_color: Some(palette.text),
                     ..Default::default()
                 }
             };
@@ -114,8 +114,8 @@ where
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
                 let palette = theme.palette();
                 container::Style {
-                    background: Some(Background::Color(palette.background.strong.color)),
-                    text_color: Some(palette.background.strong.text),
+                    background: Some(Background::Color(palette.primary)),
+                    text_color: Some(palette.text),
                     ..Default::default()
                 }
             };

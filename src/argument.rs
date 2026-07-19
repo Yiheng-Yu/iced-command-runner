@@ -51,7 +51,6 @@ pub async fn run_command(to_run: Argument, messenger: mpsc::Sender<Event>, mode:
             run_command_stream_by_line(to_run, messenger).await
         }
         StreamMode::Buffer(buffer_size) => {
-            let buffer_size = buffer_size.clone();
             run_command_stream_by_buffer(to_run, buffer_size, messenger).await
         }
     }
