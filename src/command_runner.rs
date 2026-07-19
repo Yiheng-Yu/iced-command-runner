@@ -1,7 +1,7 @@
-use crate::{ Argument, event::{ Event, Terminal }, run_command };
+use crate::{ Argument, event::{ Event, Terminal }, run_command, StreamMode };
 
 // rustfmt::skip
-use iced::widget::text_editor; // rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function
+use iced::widget::text_editor; /* rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function */
 use iced::{
     Background,
     Color,
@@ -13,10 +13,17 @@ use iced::{
     font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
-    widget::{ container, scrollable, text::LineHeight, text_editor::{ Content, Action, Edit } },
+    widget::{
+        container,
+        scrollable,
+        text,
+        text::LineHeight,
+        text_editor::{ Action, Content, Edit },
+    },
 };
 use log::warn;
-use std::cmp::min;
+use std::cmp::{ max, min };
+
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -98,7 +105,11 @@ impl CommandRunner {
     /// create new instace with no empty args
     pub fn new_no_args(command: impl Into<String>) -> Self {
         Self {
-            command: Argument { program: command.into(), args: Vec::new() },
+            command: Argument {
+                program: command.into(),
+                args: Vec::new(),
+            },
+            mode: StreamMode::Buffer(256),
             buffer: Vec::new(),
             status: Status::Idle,
             style: Style::default(),
@@ -119,45 +130,6 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // Drawing
     // ------------------------------------------------------------------
-    fn wrap_inside_scrollable<'a, Message>(
-        &'a self,
-        content: impl Into<Element<'a, Message>>
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
-    {
-        // TODO!
-        // NEED TO SET UP A PROPER SCROLLBAR TO THE TEXT EDITOR
-        // This can be done by:
-        // set customised on_scroll function here, converting scrollable amount to an editor message
-        // pass the scrollable amount to the text editor display in create_view()
-        let content: Element<'a, Message> = scrollable(content.into())
-            .auto_scroll(true)
-            .anchor_bottom()
-            .into();
-
-        self.wrap_inside_container(content)
-    }
-
-    fn wrap_inside_container<'a, Message>(
-        &'a self,
-        content: impl Into<Element<'a, Message>>
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
-    {
-        let height = self.style.calc_height(
-            min(self.buffer.len(), self.style.max_lines)
-        );
-        container(content)
-            .height(height)
-            .width(self.style.width)
-            .style(|theme| container::Style {
-                background: Some((self.style.background)(theme)),
-                border: self.border_style(theme),
-                ..Default::default()
-            })
-            .into()
-    }
-
     /// Crates a mocked terminal window to display message received in `self.buffer`
     pub fn crate_view<'a, Message>(
         &'a self,
@@ -165,52 +137,18 @@ impl CommandRunner {
     ) -> Element<'a, Message>
         where Message: Clone + 'a
     {
-        let buffer_size = self.buffer.len();
-
-        let n_lines = if buffer_size < self.style.min_lines {
-            self.style.min_lines
-        } else if buffer_size > self.style.max_lines {
-            self.style.max_lines
+        if self.style.selectable_text {
+            selectable_terminal_window(self, on_update)
         } else {
-            buffer_size
-        };
-
-        let editor_height = self.style.calc_height(n_lines);
-        let editor = text_editor(&self.content)
-            .placeholder("")
-            .font(self.style.font)
-            .line_height(self.style.line_height)
-            .on_action(move |action| on_update(Event::EditorAction(action)))
-            .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
-                let palette = theme.palette();
-                text_editor::Style {
-                    background: Background::Color(Color::TRANSPARENT),
-                    border: Border {
-                        width: 0.0,
-                        ..Default::default()
-                    },
-                    placeholder: palette.secondary.base.color,
-                    value: palette.background.base.text,
-                    selection: palette.primary.weak.color,
-                }
-            })
-            .height(editor_height)
-            .size(self.style.text_size);
-
-        // optional render as scrollable
-        self.wrap_inside_container(editor)
+            plain_terminal_window(self)
+        }
     }
 
     // ------------------------------------------------------------------
     // Updating internal states
     // ------------------------------------------------------------------
     fn format_command(&self) -> String {
-        format!(
-            "{} {} {}\n",
-            &self.style.prompt,
-            &self.command.program,
-            &self.command.args.join(" ")
-        )
+        format!("{} {} {}\n", self.style.prompt, self.command.program, self.command.args.join(" "))
     }
 
     fn update_editor_content(&mut self) {
@@ -225,8 +163,7 @@ impl CommandRunner {
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        let to_paste: String = if self.buffer.len() <= 1 {
-            let to_push = to_push.trim();
+        let to_paste: String = if self.buffer.len() == 0 {
             self.buffer.push(to_push.clone());
             to_push.as_str().trim().to_string()
         } else if to_push.starts_with_carriage_return() {
@@ -239,7 +176,6 @@ impl CommandRunner {
             // remove last line in self.content
             self.content.perform(Action::SelectLine); // select last line
             self.content.perform(Action::Edit(Edit::Delete)); // remove
-
             format!("\n{}", to_push.as_str().trim())
         } else {
             self.buffer.push(to_push.clone());
@@ -425,8 +361,8 @@ impl CommandRunner {
 
     /// overwrites `self.style.min_lines` if it's larger than current `num_lines`
     pub fn max_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines < &self.style.min_lines {
-            panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
+        if num_lines < self.style.min_lines {
+            self.style.min_lines = num_lines;
         }
 
         self.style.max_lines = num_lines;
@@ -435,8 +371,8 @@ impl CommandRunner {
 
     /// overwrites `self.style.max_lines` if it's smaller than current `num_lines`
     pub fn min_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines > &self.style.max_lines {
-            panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
+        if num_lines > self.style.max_lines {
+            self.style.max_lines = num_lines;
         }
 
         self.style.min_lines = num_lines;
