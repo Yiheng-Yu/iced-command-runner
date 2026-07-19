@@ -7,7 +7,7 @@ mod misc;
 pub use command_runner::{CommandRunner, Status, Style};
 use std::rc::Rc;
 
-pub use argument::{Argument, run_command};
+pub use argument::{Argument, StreamMode, run_command, run_command_stream_by_buffer, run_command_stream_by_line};
 pub use event::{Event, Terminal};
 pub use misc::{clear_buffer_button, run_button, status_bar};
 

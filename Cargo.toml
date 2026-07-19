@@ -1,6 +1,6 @@
 [package]
 name = "iced_command_runner"
-version = "0.3.70-dev"
+version = "0.3.71-dev"
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
@@ -27,6 +27,10 @@ path = "examples/default_layout.rs"
 [[example]]
 name = "multiple_window"
 path = "examples/multiple_window.rs"
+
+[[example]]
+name = "stream"
+path = "examples/stream/src/main.rs"
 
 
 [profile.release]

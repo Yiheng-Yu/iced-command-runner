@@ -1,25 +1,29 @@
-use crate::{
-    Argument,
-    event::{Event, Terminal},
-    run_command,
-};
+use crate::{ Argument, event::{ Event, Terminal }, run_command, StreamMode };
 
 // rustfmt::skip
 use iced::widget::text_editor; /* rustfmt::skip  <- formatter would auto iced::widget::text_editor{self,}, which imported text_editor as a file instead of a function */
 use iced::{
-    Background, Color, Element, Length, Pixels, Task,
+    Background,
+    Color,
+    Element,
+    Length,
+    Pixels,
+    Task,
     border::Border,
-    font::{Family, Font, Stretch, Style as FontStyle, Weight},
+    font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
     widget::{
-        container, scrollable, text,
+        container,
+        scrollable,
+        text,
         text::LineHeight,
-        text_editor::{Action, Content, Edit},
+        text_editor::{ Action, Content, Edit },
     },
 };
 use log::warn;
-use std::cmp::{max, min};
+use std::cmp::{ max, min };
+
 
 /// Command execution status
 #[derive(Clone, PartialEq, Debug)]
@@ -69,6 +73,8 @@ pub struct CommandRunner {
     pub buffer: Vec<Terminal>,
     /// current status i.e., running, idle etc.,
     pub status: Status,
+
+    mode: StreamMode,
     /// style configurations. Check iced_command_runner::Style for more details
     style: Style,
     /// used for iced text_editor widget, for displaying seleectable texts
@@ -82,11 +88,15 @@ impl CommandRunner {
     /// let runner = CommandRunner::new("echo", ["hiii"])
     /// .text_size(13.0);
     /// ```
-    pub fn new(command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
+    pub fn new(
+        command: impl Into<String>,
+        args: impl IntoIterator<Item = impl Into<String>>
+    ) -> Self {
         Self {
             command: Argument::new(command, args),
             buffer: Vec::new(),
             status: Status::Idle,
+            mode: StreamMode::Buffer(256),
             style: Style::default(),
             content: Content::new(),
         }
@@ -99,6 +109,7 @@ impl CommandRunner {
                 program: command.into(),
                 args: Vec::new(),
             },
+            mode: StreamMode::Buffer(256),
             buffer: Vec::new(),
             status: Status::Idle,
             style: Style::default(),
@@ -120,9 +131,11 @@ impl CommandRunner {
     // Drawing
     // ------------------------------------------------------------------
     /// Crates a mocked terminal window to display message received in `self.buffer`
-    pub fn crate_view<'a, Message>(&'a self, on_update: impl (Fn(Event) -> Message) + 'a) -> Element<'a, Message>
-    where
-        Message: Clone + 'a,
+    pub fn crate_view<'a, Message>(
+        &'a self,
+        on_update: impl (Fn(Event) -> Message) + 'a
+    ) -> Element<'a, Message>
+        where Message: Clone + 'a
     {
         if self.style.selectable_text {
             selectable_terminal_window(self, on_update)
@@ -135,12 +148,7 @@ impl CommandRunner {
     // Updating internal states
     // ------------------------------------------------------------------
     fn format_command(&self) -> String {
-        format!(
-            "{} {} {}\n",
-            self.style.prompt,
-            self.command.program,
-            self.command.args.join(" ")
-        )
+        format!("{} {} {}\n", self.style.prompt, self.command.program, self.command.args.join(" "))
     }
 
     fn update_editor_content(&mut self) {
@@ -169,23 +177,21 @@ impl CommandRunner {
             self.content.perform(Action::SelectLine); // select last line
             self.content.perform(Action::Edit(Edit::Delete)); // remove
             format!("\n{}", to_push.as_str().trim())
-
         } else {
             self.buffer.push(to_push.clone());
             format!("\n{}", to_push.as_str().trim())
         };
 
         // push contents to the text editor
-        self.content
-            .perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
+        self.content.perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
     }
 
     fn create_stream(&mut self) -> Task<Event> {
         let runner = self.command.clone();
-        let streamer = channel(1024, |messenger| run_command(runner, messenger));
+        let mode = self.mode.clone();
+        let streamer = channel(1024, |messenger| run_command(runner, messenger, mode));
         Task::stream(streamer)
     }
-
     pub fn is_running(&self) -> bool {
         Status::is_running(&self.status)
     }
@@ -263,13 +269,41 @@ impl CommandRunner {
     /// runner.update(Event::Execute).await; // receives Terminal::StdOut("hi\n")
     /// ```
     pub fn set_args(&mut self, args: impl IntoIterator<Item = impl Into<String>>) {
-        let new_argument = args.into_iter().map(|s| s.into()).collect::<Vec<String>>();
+        let new_argument = args
+            .into_iter()
+            .map(|s| s.into())
+            .collect::<Vec<String>>();
         self.command.args = new_argument;
     }
 
     // ------------------------------------------------------------------
-    // styling
+    // styling & Configurations
     // ------------------------------------------------------------------
+    /// stream data line by line
+    /// calling tokio BufReader::read_line at the backend
+    pub fn stream_mode_line(mut self) -> Self {
+        self.mode = StreamMode::Line;
+        self
+    }
+    
+    /// stream data by filling the buffer
+    /// /// calling tokio BufReader::read at the backend
+    pub fn stream_mode_buffer(mut self, size: usize) -> Self {
+        self.mode = StreamMode::Buffer(size);
+        self
+    }
+
+    /// when self.mode is StreamMode::Line -> does nothing
+    pub fn channel_buffer_size(mut self, size: usize) -> Self {
+        match &self.mode {
+            StreamMode::Line => self,
+            StreamMode::Buffer(_) => {
+                self.mode = StreamMode::Buffer(size);
+                self
+            }
+        }
+    }
+
     /// creates different borders based on current state of the runner
     pub fn dynamic_border(&self, theme: &Theme) -> Border {
         match self.status {
@@ -325,18 +359,20 @@ impl CommandRunner {
         self
     }
 
+    /// overwrites `self.style.min_lines` if it's larger than current `num_lines`
     pub fn max_lines(mut self, num_lines: usize) -> Self {
         if num_lines < self.style.min_lines {
-            panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
+            self.style.min_lines = num_lines;
         }
 
         self.style.max_lines = num_lines;
         self
     }
 
+    /// overwrites `self.style.max_lines` if it's smaller than current `num_lines`
     pub fn min_lines(mut self, num_lines: usize) -> Self {
         if num_lines > self.style.max_lines {
-            panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
+            self.style.max_lines = num_lines;
         }
 
         self.style.min_lines = num_lines;
@@ -447,10 +483,9 @@ impl Style {
 
 pub fn selectable_terminal_window<'a, Message>(
     runner: &'a CommandRunner,
-    on_update: impl (Fn(Event) -> Message) + 'a,
+    on_update: impl (Fn(Event) -> Message) + 'a
 ) -> Element<'a, Message>
-where
-    Message: Clone + 'a,
+    where Message: Clone + 'a
 {
     if runner.buffer.is_empty() && runner.style.min_lines == 0 {
         return iced::widget::space().height(0.0).width(0.0).into();
@@ -501,12 +536,11 @@ where
 }
 
 pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<'a, Message>
-where
-    Message: Clone + 'a,
+    where Message: Clone + 'a
 {
     if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
-        return iced::widget::space().height(0.0).into()
-    };
+        return iced::widget::space().height(0.0).into();
+    }
 
     let font = runner.style.font;
     let text_size = runner.style.text_size;
@@ -518,55 +552,53 @@ where
         .line_height(line_height)
         .wrapping(iced_core::text::Wrapping::Word);
 
-    
     // Horizontal scrollbars in iced::scrollable blocks last line of text
     // if there's only 1 line to display & no vertical scrollbar
     // so the actual min_lines for scrollable to work would be 3
     // if in future this gets fixed then uhh yeah would save a lot of effort
-    // (p.s: setting spacing() for horizontal bars also DOES NOT WORK) 
+    // (p.s: setting spacing() for horizontal bars also DOES NOT WORK)
     let current_buffer_size = runner.buffer.len();
-    
+
     let bottom_padding = if current_buffer_size <= 3 {
-        runner.style.text_size * (1.0 + 0.25 * current_buffer_size as f32)
+        runner.style.text_size * (1.0 + 0.25 * (current_buffer_size as f32))
     } else {
         runner.style.text_size * 0.75
     };
 
     let content = container(content)
-    .height(Length::Shrink)
-    .width(Length::Fill)
-    .padding(iced::Padding {
-        top: 3.0,
-        right: 1.0,
-        bottom: bottom_padding, // bottom_padding, // so horizontal won't overlay text
-        left: 1.0,
-    });
-    
+        .height(Length::Shrink)
+        .width(Length::Fill)
+        .padding(iced::Padding {
+            top: 3.0,
+            right: 1.0,
+            bottom: bottom_padding, // bottom_padding, // so horizontal won't overlay text
+            left: 1.0,
+        });
+
     let content = if current_buffer_size > runner.style.max_lines {
         let n_lines = max(runner.style.min_lines, current_buffer_size);
         let n_lines = min(n_lines, runner.style.max_lines);
         let max_height = runner.style.calc_height(n_lines);
         // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
-        scrollable::Scrollable::with_direction(
-            content,
-            scrollable::Direction::Both {
+        scrollable::Scrollable
+            ::with_direction(content, scrollable::Direction::Both {
                 vertical: scrollable::Scrollbar::default().margin(0.0),
                 horizontal: scrollable::Scrollbar::default().margin(0.0),
-            },
-        )
-        .height(max_height)
-        .width(Length::Fill)
-        .auto_scroll(true)
-        .anchor_bottom()
+            })
+            .height(max_height)
+            .width(Length::Fill)
+            .auto_scroll(true)
+            .anchor_bottom()
     } else {
         let max_height = runner.style.calc_height(current_buffer_size);
-        scrollable::Scrollable::with_direction(
-            content,
-            scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0)),
-        )
-        .height(max_height)
-        .width(Length::Fill)
-        .auto_scroll(false)
+        scrollable::Scrollable
+            ::with_direction(
+                content,
+                scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0))
+            )
+            .height(max_height)
+            .width(Length::Fill)
+            .auto_scroll(false)
     };
 
     container(content)
