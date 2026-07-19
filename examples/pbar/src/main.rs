@@ -41,8 +41,5 @@ impl App {
 }
 
 fn new() -> App {
-    App {
-        runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"])
-        .stream_mode_buffer(128),
-    }
+    App{ runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"]) }
 }

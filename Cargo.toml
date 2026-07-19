@@ -1,6 +1,10 @@
 [package]
 name = "iced_command_runner"
+<<<<<<< HEAD
 version = "0.3.71-dev"
+=======
+version = "0.3.54"
+>>>>>>> origin/main
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
