@@ -1,6 +1,10 @@
 [package]
 name = "iced_command_runner"
+<<<<<<< HEAD
+version = "0.3.71-dev"
+=======
 version = "0.3.54"
+>>>>>>> origin/main
 edition = "2024"
 description = "An iced widget that spawns child command line process, execute commands, streams its outputs, and displays them in a mocked terminal window."
 readme = "README.md"
@@ -28,6 +32,10 @@ path = "examples/default_layout.rs"
 name = "multiple_window"
 path = "examples/multiple_window.rs"
 
+[[example]]
+name = "stream"
+path = "examples/stream/src/main.rs"
+
 
 [profile.release]
 opt-level = 3
@@ -40,13 +48,15 @@ lto = true
 [dev-dependencies]
 futures = "0.3.32"
 
+[patch.crates-io]
+iced_core = { version = "0.15.0-dev", git = "https://github.com/iced-rs/iced" }
+iced_widget = { git = "https://github.com/iced-rs/iced" }
+iced_winit = { git = "https://github.com/iced-rs/iced" }
 
 [dependencies]
-iced = { version = "0.14.0", features = [
-    'advanced',
-    'debug',
-    'tokio',
-] }
-iced_core = "0.14.0"
+iced = { git = "https://github.com/iced-rs/iced", features = ["tokio"]}
+iced_core = { git = "https://github.com/iced-rs/iced" }
+iced_widget = { git = "https://github.com/iced-rs/iced" }
+iced_winit = { git = "https://github.com/iced-rs/iced" }
 log = "0.4.33"
 tokio = { version = "1.52.3", features = ["full"] }

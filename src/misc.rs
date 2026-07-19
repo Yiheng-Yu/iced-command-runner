@@ -6,7 +6,7 @@ use iced::{
 };
 use iced_core::text::Wrapping;
 
-/// button that sends `Event::Execute` message when pressed. 
+/// button that sends `Event::Execute` message when pressed.
 /// Passing `Event::Execute`` to `CommandRunner.update()` triggers command execution and output streaming
 /// This function is intended to use inside the `view()` function of your application.
 pub fn run_button<'a, Message>(
@@ -19,17 +19,14 @@ where
 {
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
-        button(content)
-        .style(|theme, _status| button::primary(theme, button::Status::Disabled))
+        button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::Execute);
-        button(content)
-        .on_press(msg)
+        button(content).on_press(msg).style(button::primary)
     }
 }
 
-
-/// button that sends `Event::ClearBuffer` message when pressed. 
+/// button that sends `Event::ClearBuffer` message when pressed.
 /// Passing `Event::ClearBuffer`` to `CommandRunner.update()` removes all buffer stored in the `CommandRunner` instance
 /// This function is intended to use inside the `view()` function of your application.
 pub fn clear_buffer_button<'a, Message>(
@@ -42,12 +39,10 @@ where
 {
     // make button unclickable if it's running
     if Status::is_running(runner_status) {
-        button(content)
-        .style(|theme, _status| button::primary(theme, button::Status::Disabled))
+        button(content).style(|theme, _status| button::primary(theme, button::Status::Disabled))
     } else {
         let msg = on_press(Event::ClearBuffer);
-        button(content)
-        .on_press(msg)
+        button(content).on_press(msg).style(button::primary)
     }
 }
 
@@ -68,7 +63,7 @@ where
 
             // need to provide explicit fn type to the compiler
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -88,7 +83,7 @@ where
                 .wrapping(Wrapping::Word);
 
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -103,7 +98,7 @@ where
             let message = text(message).wrapping(Wrapping::Word);
 
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.stronger.color)),
                     text_color: Some(palette.background.stronger.text),
@@ -117,7 +112,7 @@ where
             let message = "Ready".to_string();
             let message = text(message).wrapping(Wrapping::Word);
             let style_fn: fn(&Theme) -> container::Style = |theme: &Theme| {
-                let palette = theme.extended_palette();
+                let palette = theme.palette();
                 container::Style {
                     background: Some(Background::Color(palette.background.strong.color)),
                     text_color: Some(palette.background.strong.text),

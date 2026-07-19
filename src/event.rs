@@ -15,7 +15,7 @@ pub enum Event {
     /// data produced by the terminal
     Stream(Terminal),
 
-    /// user interactions on the terminal output window, mainly used for making output texts selectable 
+    /// user interactions on the terminal output window, mainly used for making output texts selectable
     /// (i.e., can select text -> copy -> paste elsewhere)
     EditorAction(EditorAction),
     /// Exit success
@@ -27,7 +27,7 @@ pub enum Event {
 /// Outputs from the terminal
 #[derive(Clone, PartialEq, Debug)]
 pub enum Terminal {
-    StdIn(String),  // TODO: add support to pass stdin to an running process?
+    StdIn(String), // TODO: add support to pass stdin to an running process?
     StdOut(String),
     StdErr(String),
     Error(String),

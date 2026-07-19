@@ -66,6 +66,8 @@ pub struct CommandRunner {
     pub buffer: Vec<Terminal>,
     /// current status i.e., running, idle etc.,
     pub status: Status,
+
+    mode: StreamMode,
     /// style configurations. Check iced_command_runner::Style for more details
     style: Style,
     /// used for iced text_editor widget, for displaying seleectable texts
@@ -87,6 +89,7 @@ impl CommandRunner {
             command: Argument::new(command, args),
             buffer: Vec::new(),
             status: Status::Idle,
+            mode: StreamMode::Buffer(256),
             style: Style::default(),
             content: Content::new(),
         }
@@ -214,7 +217,7 @@ impl CommandRunner {
         let mut content: Vec<String> = Vec::new();
         for msg in self.buffer.iter() {
             match msg {
-                Terminal::StdIn(msg) => content.push(format!("{} {}", &self.style.prompt, msg)),
+                Terminal::StdIn(msg) => content.push(format!("{} {}", self.style.prompt, msg)),
                 _ => content.push(msg.as_str().to_string()),
             }
         }
@@ -249,10 +252,10 @@ impl CommandRunner {
 
     fn create_stream(&mut self) -> Task<Event> {
         let runner = self.command.clone();
-        let streamer = channel(1024, |messenger| run_command(runner, messenger));
+        let mode = self.mode.clone();
+        let streamer = channel(1024, |messenger| run_command(runner, messenger, mode));
         Task::stream(streamer)
     }
-
     pub fn is_running(&self) -> bool {
         Status::is_running(&self.status)
     }
@@ -338,9 +341,35 @@ impl CommandRunner {
     }
 
     // ------------------------------------------------------------------
-    // styling
+    // styling & Configurations
     // ------------------------------------------------------------------
-    fn border_style(&self, theme: &Theme) -> Border {
+    /// stream data line by line
+    /// calling tokio BufReader::read_line at the backend
+    pub fn stream_mode_line(mut self) -> Self {
+        self.mode = StreamMode::Line;
+        self
+    }
+    
+    /// stream data by filling the buffer
+    /// /// calling tokio BufReader::read at the backend
+    pub fn stream_mode_buffer(mut self, size: usize) -> Self {
+        self.mode = StreamMode::Buffer(size);
+        self
+    }
+
+    /// when self.mode is StreamMode::Line -> does nothing
+    pub fn channel_buffer_size(mut self, size: usize) -> Self {
+        match &self.mode {
+            StreamMode::Line => self,
+            StreamMode::Buffer(_) => {
+                self.mode = StreamMode::Buffer(size);
+                self
+            }
+        }
+    }
+
+    /// creates different borders based on current state of the runner
+    pub fn dynamic_border(&self, theme: &Theme) -> Border {
         match self.status {
             Status::Idle => (self.style.border_idle)(theme),
             Status::Initialize => (self.style.border_running)(theme),
@@ -356,6 +385,11 @@ impl CommandRunner {
 
     pub fn background(mut self, background_fn: fn(&Theme) -> Background) -> Self {
         self.style.background = background_fn.into();
+        self
+    }
+
+    pub fn selectable_text(mut self, is_selectable: bool) -> Self {
+        self.style.selectable_text = is_selectable;
         self
     }
 
@@ -389,6 +423,7 @@ impl CommandRunner {
         self
     }
 
+    /// overwrites `self.style.min_lines` if it's larger than current `num_lines`
     pub fn max_lines(mut self, num_lines: usize) -> Self {
         if &num_lines < &self.style.min_lines {
             panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
@@ -398,6 +433,7 @@ impl CommandRunner {
         self
     }
 
+    /// overwrites `self.style.max_lines` if it's smaller than current `num_lines`
     pub fn min_lines(mut self, num_lines: usize) -> Self {
         if &num_lines > &self.style.max_lines {
             panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
@@ -436,6 +472,11 @@ pub struct Style {
     /// background colour for the terminal window
     pub background: fn(&Theme) -> Background,
 
+    /// toggle on/ off for rendering selectable/ non-selectable terminal window
+    /// because currently rendered iced::widget::text is not selectable,
+    /// uses text_editor widget instead when selectable_text as 'true'
+    pub selectable_text: bool,
+
     /// widget border when CommandRunner.status is Status::Idle (ready to run)
     pub border_idle: fn(&Theme) -> Border,
     /// widget border when CommandRunner is running commands
@@ -457,7 +498,7 @@ impl Default for Style {
                 let palette = theme.palette();
                 Background::Color(palette.background.weakest.color)
             },
-
+            selectable_text: true,
             border_idle: |theme| {
                 let palette = theme.palette();
                 Border {
@@ -502,6 +543,138 @@ impl Style {
         let height_pixels: Pixels = text_size * n_lines;
         Length::from(height_pixels)
     }
+}
+
+pub fn selectable_terminal_window<'a, Message>(
+    runner: &'a CommandRunner,
+    on_update: impl (Fn(Event) -> Message) + 'a
+) -> Element<'a, Message>
+    where Message: Clone + 'a
+{
+    if runner.buffer.is_empty() && runner.style.min_lines == 0 {
+        return iced::widget::space().height(0.0).width(0.0).into();
+    }
+
+    // a string styling thingy:
+    // when there was just 1 line to print
+    // horizontal scrollbar WILL COVER that one single line, if it gets shown
+    // to disable this we'd also need to make this a special case
+    let n_lines = runner.buffer.len();
+    let n_lines = if n_lines == 1 { 2 } else { n_lines };
+    let n_lines = max(runner.style.min_lines, n_lines);
+    let n_lines = min(n_lines, runner.style.max_lines);
+    let editor_height = runner.style.calc_height(n_lines);
+
+    let editor = text_editor(&runner.content)
+        .placeholder("")
+        .font(runner.style.font)
+        .line_height(runner.style.line_height)
+        .on_action(move |action| on_update(Event::EditorAction(action)))
+        .style(|theme: &Theme, _status: iced::widget::text_editor::Status| {
+            let palette = theme.palette();
+            text_editor::Style {
+                background: Background::Color(Color::TRANSPARENT),
+                border: Border {
+                    width: 0.0,
+                    ..Default::default()
+                },
+                placeholder: palette.secondary.base.color,
+                value: palette.background.base.text,
+                selection: palette.primary.weak.color,
+            }
+        })
+        .height(editor_height)
+        .size(runner.style.text_size);
+
+    let content = scrollable(editor).auto_scroll(true).anchor_bottom();
+
+    container(content)
+        .height(Length::Shrink)
+        .width(runner.style.width)
+        .style(|theme| container::Style {
+            background: Some((runner.style.background)(theme)),
+            border: runner.dynamic_border(theme),
+            ..Default::default()
+        })
+        .into()
+}
+
+pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<'a, Message>
+    where Message: Clone + 'a
+{
+    if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
+        return iced::widget::space().height(0.0).into();
+    }
+
+    let font = runner.style.font;
+    let text_size = runner.style.text_size;
+    let line_height = runner.style.line_height;
+
+    let content = text(runner.content.text())
+        .font(font)
+        .size(text_size)
+        .line_height(line_height)
+        .wrapping(iced_core::text::Wrapping::Word);
+
+    // Horizontal scrollbars in iced::scrollable blocks last line of text
+    // if there's only 1 line to display & no vertical scrollbar
+    // so the actual min_lines for scrollable to work would be 3
+    // if in future this gets fixed then uhh yeah would save a lot of effort
+    // (p.s: setting spacing() for horizontal bars also DOES NOT WORK)
+    let current_buffer_size = runner.buffer.len();
+
+    let bottom_padding = if current_buffer_size <= 3 {
+        runner.style.text_size * (1.0 + 0.25 * (current_buffer_size as f32))
+    } else {
+        runner.style.text_size * 0.75
+    };
+
+    let content = container(content)
+        .height(Length::Shrink)
+        .width(Length::Fill)
+        .padding(iced::Padding {
+            top: 3.0,
+            right: 1.0,
+            bottom: bottom_padding, // bottom_padding, // so horizontal won't overlay text
+            left: 1.0,
+        });
+
+    let content = if current_buffer_size > runner.style.max_lines {
+        let n_lines = max(runner.style.min_lines, current_buffer_size);
+        let n_lines = min(n_lines, runner.style.max_lines);
+        let max_height = runner.style.calc_height(n_lines);
+        // TODO: ADD SCROLLABLE STYLING OPTIONS TO THE STYLE STRUCT
+        scrollable::Scrollable
+            ::with_direction(content, scrollable::Direction::Both {
+                vertical: scrollable::Scrollbar::default().margin(0.0),
+                horizontal: scrollable::Scrollbar::default().margin(0.0),
+            })
+            .height(max_height)
+            .width(Length::Fill)
+            .auto_scroll(true)
+            .anchor_bottom()
+    } else {
+        let max_height = runner.style.calc_height(current_buffer_size);
+        scrollable::Scrollable
+            ::with_direction(
+                content,
+                scrollable::Direction::Horizontal(scrollable::Scrollbar::default().margin(0.0))
+            )
+            .height(max_height)
+            .width(Length::Fill)
+            .auto_scroll(false)
+    };
+
+    container(content)
+        .height(Length::Shrink)
+        .width(runner.style.width)
+        .padding(2.0)
+        .style(|theme| container::Style {
+            background: Some((runner.style.background)(theme)),
+            border: runner.dynamic_border(theme),
+            ..Default::default()
+        })
+        .into()
 }
 
 #[cfg(test)]

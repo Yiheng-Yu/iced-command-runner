@@ -1,3 +1,6 @@
+# iced_command_runner
+
+## Overview
 
 `iced_command_runner` is an iced widget for used for executing terminal commands and stream outputs. 
 
@@ -11,9 +14,15 @@ Note that this is still a bit of work-in-progress. Current API is done and won't
 
 If you found any issues, please do feel free to [submit them](https://github.com/Yiheng-Yu/iced-command-runner/issues) or do some [pull requests](https://github.com/Yiheng-Yu/iced-command-runner/pulls) on your fixes/ improvements, thanks in advance.
 
+<<<<<<< HEAD
+`iced` it self is also in active development. I will try my best to udpate this crate trakcing the most recent stable release of `iced` as soon as I could. The `dev` branch of `iced_command_runner` on github is tracking  the `dev` build of `iced`, if you want to use this version instead, add this to your `Cargo.toml`:
+
+Add to your `[patch.crates-io]`:
+=======
 `iced` it self is also in active development. I will try my best to udpate this crate trakcing the most recent stable release of `iced` as soon as I could. If you wish to use latest development version of iced in your project, you may wish to use the dev branch of `iced_command_runner`, which tracks the dev branch of iced.
 
 To do so, add this to your `[patch.crates-io]`:
+>>>>>>> origin/main
 
 ```toml
 [patch.crates-io]
@@ -22,7 +31,11 @@ iced_widget = { git = "https://github.com/iced-rs/iced" }
 iced_winit = { git = "https://github.com/iced-rs/iced" }
 ```
 
+<<<<<<< HEAD
+..And add this to `[dependencies]`:
+=======
 ..And this to `[dependencies]`:
+>>>>>>> origin/main
 
 ```toml
 [dependencies]

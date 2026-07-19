@@ -2,3 +2,5 @@
 target/
 tests/
 **.code-workspace
+
+Cargo.lock

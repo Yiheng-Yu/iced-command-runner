@@ -22,10 +22,10 @@ struct App {
 impl App {
     pub fn view(&self) -> iced::Element<'_, Message> {
         let terminal_window =
-            terminal_container(&self.runner, Message::Runner, "Run dummy progress bar", "Clear history");
+            terminal_container(&self.runner, Message::Runner, "Run", "Clear history");
 
         let content = iced::widget::column![
-            iced::widget::text("Progress bar demo (requires python 'tqdm' package)"),
+            iced::widget::text("Data stream demo"),
             terminal_window
         ]
         .spacing(10.0);
@@ -41,5 +41,9 @@ impl App {
 }
 
 fn new() -> App {
-    App{ runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"]) }
+    App {
+        runner: create_runner("python", ["examples/stream/src/stream_demo.py"])
+        .min_lines(15)
+        .stream_mode_line(),
+    }
 }
