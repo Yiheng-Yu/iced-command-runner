@@ -13,7 +13,7 @@ use iced::{
     font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
     theme::Theme,
-    widget::{ container, scrollable, text::LineHeight, text_editor::{ Content, Action, Edit } },
+    widget::{ container, text::LineHeight, text_editor::{ Content, Action, Edit } },
 };
 use log::warn;
 use std::cmp::min;
@@ -119,25 +119,6 @@ impl CommandRunner {
     // ------------------------------------------------------------------
     // Drawing
     // ------------------------------------------------------------------
-    fn wrap_inside_scrollable<'a, Message>(
-        &'a self,
-        content: impl Into<Element<'a, Message>>
-    ) -> Element<'a, Message>
-        where Message: Clone + 'a
-    {
-        // TODO!
-        // NEED TO SET UP A PROPER SCROLLBAR TO THE TEXT EDITOR
-        // This can be done by:
-        // set customised on_scroll function here, converting scrollable amount to an editor message
-        // pass the scrollable amount to the text editor display in create_view()
-        let content: Element<'a, Message> = scrollable(content.into())
-            .auto_scroll(true)
-            .anchor_bottom()
-            .into();
-
-        self.wrap_inside_container(content)
-    }
-
     fn wrap_inside_container<'a, Message>(
         &'a self,
         content: impl Into<Element<'a, Message>>
@@ -189,9 +170,9 @@ impl CommandRunner {
                         width: 0.0,
                         ..Default::default()
                     },
-                    placeholder: palette.secondary.base.color,
-                    value: palette.background.base.text,
-                    selection: palette.primary.weak.color,
+                    placeholder: palette.text,
+                    value: palette.background,
+                    selection: palette.primary,
                 }
             })
             .height(editor_height)
@@ -207,9 +188,9 @@ impl CommandRunner {
     fn format_command(&self) -> String {
         format!(
             "{} {} {}\n",
-            &self.style.prompt,
-            &self.command.program,
-            &self.command.args.join(" ")
+            self.style.prompt,
+            self.command.program,
+            self.command.args.join(" ")
         )
     }
 
@@ -425,7 +406,7 @@ impl CommandRunner {
 
     /// overwrites `self.style.min_lines` if it's larger than current `num_lines`
     pub fn max_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines < &self.style.min_lines {
+        if num_lines < self.style.min_lines {
             panic!("Cannot set value of 'max_lines' smaller than 'style.min_lines' !");
         }
 
@@ -435,7 +416,7 @@ impl CommandRunner {
 
     /// overwrites `self.style.max_lines` if it's smaller than current `num_lines`
     pub fn min_lines(mut self, num_lines: usize) -> Self {
-        if &num_lines > &self.style.max_lines {
+        if num_lines > self.style.max_lines {
             panic!("Cannot set value of 'min_lines' larger than 'style.max_lines' !");
         }
 
@@ -496,13 +477,13 @@ impl Default for Style {
             min_lines: 3,
             background: |theme| {
                 let palette = theme.palette();
-                Background::Color(palette.background.weakest.color)
+                Background::Color(palette.background)
             },
             selectable_text: true,
             border_idle: |theme| {
                 let palette = theme.palette();
                 Border {
-                    color: palette.primary.base.color,
+                    color: palette.primary,
                     width: 1.0,
                     ..Default::default()
                 }
@@ -510,7 +491,7 @@ impl Default for Style {
             border_running: |theme| {
                 let palette = theme.palette();
                 Border {
-                    color: palette.primary.base.color,
+                    color: palette.primary,
                     width: 1.5,
                     ..Default::default()
                 }
@@ -518,7 +499,7 @@ impl Default for Style {
             border_error: |theme| {
                 let palette = theme.palette();
                 Border {
-                    color: palette.danger.base.color,
+                    color: palette.danger,
                     width: 1.5,
                     ..Default::default()
                 }
