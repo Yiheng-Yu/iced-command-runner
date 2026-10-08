@@ -43,6 +43,13 @@ impl Terminal {
         }
     }
 
+    pub(crate) fn text_mut(&mut self) -> &mut String {
+        match self {
+            Terminal::StdIn(s) | Terminal::StdOut(s)
+            | Terminal::StdErr(s) | Terminal::Error(s) => s,
+        }
+    }
+
     pub fn starts_with_carriage_return(&self) -> bool {
         match self {
             Terminal::StdIn(s) => s.starts_with("\r"),
@@ -55,9 +62,9 @@ impl Terminal {
     pub fn trim(&self) -> Terminal {
         match self {
             Terminal::StdIn(data) => Terminal::StdIn(data.trim().to_string()),
-            Terminal::StdOut(data) => Terminal::StdIn(data.trim().to_string()),
-            Terminal::StdErr(data) => Terminal::StdIn(data.trim().to_string()),
-            Terminal::Error(data) => Terminal::StdIn(data.trim().to_string()),
+            Terminal::StdOut(data) => Terminal::StdOut(data.trim().to_string()),
+            Terminal::StdErr(data) => Terminal::StdErr(data.trim().to_string()),
+            Terminal::Error(data) => Terminal::Error(data.trim().to_string()),
         }
     }
 }

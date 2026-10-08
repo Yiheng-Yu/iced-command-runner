@@ -1,7 +1,7 @@
 use iced_command_runner::{CommandRunner, create_runner, event::Event, terminal_container};
 
-use iced::Size;
 use iced::widget;
+use iced::{Size, Widget};
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -31,7 +31,7 @@ impl App {
         }
     }
 
-    pub fn view(&self) -> iced::Element<'_, Message> {
+    pub fn view(&self) -> impl Widget<Message> + '_ {
         let title = widget::text("Default layout");
         let text_prompt = widget::row![
             widget::text("Type something to echo: "),
@@ -45,7 +45,6 @@ impl App {
         widget::column![title, text_prompt, terminal_window]
             .spacing(2.5)
             .padding(5.0)
-            .into()
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {

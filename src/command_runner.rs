@@ -9,6 +9,7 @@ use iced::{
     Length,
     Pixels,
     Task,
+    Widget,
     border::Border,
     font::{ Family, Font, Stretch, Style as FontStyle, Weight },
     stream::channel,
@@ -18,7 +19,8 @@ use iced::{
         scrollable,
         text,
         text::LineHeight,
-        text_editor::{ Action, Content, Edit },
+        text_editor::Content,
+        void,
     },
 };
 use log::warn;
@@ -59,10 +61,10 @@ impl Status {
 /// Instance of CommandRunner itself does not work on its own, as you will need to incorporate it with other iced widgets to make it work.
 ///
 /// Example usage:
-/// ```rust, ignore
+/// ```rust
 /// use iced_command_runner::create_runner;
 ///
-/// let runner = create_runner::new("echo", ["hiii"])
+/// let runner = create_runner("echo", ["hiii"])
 /// .text_size(13.0);
 /// ```
 #[derive(Clone, Debug)]
@@ -79,11 +81,14 @@ pub struct CommandRunner {
     style: Style,
     /// used for iced text_editor widget, for displaying seleectable texts
     content: Content,
+    // The current output line is independent of the user's editor cursor.
+    output_line: Option<usize>,
+    overwrite_line: bool,
 }
 
 impl CommandRunner {
     /// create new CommandRunner instance, example:
-    /// ```rust, ignore
+    /// ```rust
     /// use iced_command_runner::CommandRunner;
     /// let runner = CommandRunner::new("echo", ["hiii"])
     /// .text_size(13.0);
@@ -99,6 +104,8 @@ impl CommandRunner {
             mode: StreamMode::Buffer(256),
             style: Style::default(),
             content: Content::new(),
+            output_line: None,
+            overwrite_line: false,
         }
     }
 
@@ -114,6 +121,8 @@ impl CommandRunner {
             status: Status::Idle,
             style: Style::default(),
             content: Content::new(),
+            output_line: None,
+            overwrite_line: false,
         }
     }
 
@@ -152,38 +161,47 @@ impl CommandRunner {
     }
 
     fn update_editor_content(&mut self) {
-        let mut content: Vec<String> = Vec::new();
-        for msg in self.buffer.iter() {
-            match msg {
-                Terminal::StdIn(msg) => content.push(format!("{} {}", self.style.prompt, msg)),
-                _ => content.push(msg.as_str().to_string()),
+        let mut text = String::new();
+        for msg in &self.buffer {
+            if !text.is_empty() && !text.ends_with('\n') {
+                text.push('\n');
             }
+            text.push_str(msg.as_str());
         }
-        self.content = Content::with_text(content.join("").trim());
+        self.content = Content::with_text(&text);
+        self.content.perform(text_editor::Action::Move(text_editor::Motion::DocumentEnd));
     }
 
     fn push_to_buffer(&mut self, to_push: Terminal) {
-        let to_paste: String = if self.buffer.len() == 0 {
-            self.buffer.push(to_push.clone());
-            to_push.as_str().trim().to_string()
-        } else if to_push.starts_with_carriage_return() {
-            let to_push = to_push.trim();
-            let length = self.buffer.len().saturating_sub(1);
-            // remove last line in the buffer
-            self.buffer.truncate(length);
-            self.buffer.push(to_push.clone());
-
-            // remove last line in self.content
-            self.content.perform(Action::SelectLine); // select last line
-            self.content.perform(Action::Edit(Edit::Delete)); // remove
-            format!("\n{}", to_push.as_str().trim())
+        if matches!(to_push, Terminal::StdIn(_)) {
+            self.output_line = None;
+            self.overwrite_line = false;
+            self.buffer.push(to_push);
         } else {
-            self.buffer.push(to_push.clone());
-            format!("\n{}", to_push.as_str().trim())
-        };
-
-        // push contents to the text editor
-        self.content.perform(Action::Edit(Edit::Paste(to_paste.as_str().to_string().into())));
+            let mut empty_line = to_push.clone();
+            empty_line.text_mut().clear();
+            for ch in to_push.as_str().chars() {
+                if ch == '\r' {
+                    self.overwrite_line = true;
+                    continue;
+                }
+                let index = *self.output_line.get_or_insert_with(|| {
+                    self.buffer.push(empty_line.clone());
+                    self.buffer.len() - 1
+                });
+                let line = self.buffer[index].text_mut();
+                // Wait for text after CR: CRLF must preserve the finished line.
+                if self.overwrite_line && ch != '\n' {
+                    line.clear();
+                }
+                self.overwrite_line = false;
+                line.push(ch);
+                if ch == '\n' {
+                    self.output_line = None;
+                }
+            }
+        }
+        self.update_editor_content();
     }
 
     fn create_stream(&mut self) -> Task<Event> {
@@ -230,6 +248,8 @@ impl CommandRunner {
 
             Event::ClearBuffer => {
                 self.buffer = Vec::new();
+                self.output_line = None;
+                self.overwrite_line = false;
                 self.update_editor_content();
                 Task::none()
             }
@@ -262,11 +282,12 @@ impl CommandRunner {
     // command running
     // ------------------------------------------------------------------
     /// Update argument for the command to run. i.e:
-    /// ```ignore
-    /// use iced_command_runner::CommandRunner;
-    /// let runner = CommandRunner::new("echo", ["hello!"]);  // receives Terminal::StdOut("hello!\n")
+    /// ```rust
+    /// use iced_command_runner::{CommandRunner, Event};
+    /// let mut runner = CommandRunner::new("echo", ["hello!"]);
     /// runner.set_args(["hi"]);
-    /// runner.update(Event::Execute).await; // receives Terminal::StdOut("hi\n")
+    /// // Return this task from your application update, mapping it to your message.
+    /// let task = runner.update(Event::Execute);
     /// ```
     pub fn set_args(&mut self, args: impl IntoIterator<Item = impl Into<String>>) {
         let new_argument = args
@@ -488,7 +509,7 @@ pub fn selectable_terminal_window<'a, Message>(
     where Message: Clone + 'a
 {
     if runner.buffer.is_empty() && runner.style.min_lines == 0 {
-        return iced::widget::space().height(0.0).width(0.0).into();
+        return void().boxed();
     }
 
     // a string styling thingy:
@@ -502,6 +523,7 @@ pub fn selectable_terminal_window<'a, Message>(
     let editor_height = runner.style.calc_height(n_lines);
 
     let editor = text_editor(&runner.content)
+        .wrapping(iced_core::text::Wrapping::None)
         .placeholder("")
         .font(runner.style.font)
         .line_height(runner.style.line_height)
@@ -532,14 +554,14 @@ pub fn selectable_terminal_window<'a, Message>(
             border: runner.dynamic_border(theme),
             ..Default::default()
         })
-        .into()
+        .boxed()
 }
 
 pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<'a, Message>
     where Message: Clone + 'a
 {
     if runner.buffer.len() == 0 && runner.style.min_lines == 0 {
-        return iced::widget::space().height(0.0).into();
+        return iced::widget::space().height(0.0).boxed();
     }
 
     let font = runner.style.font;
@@ -610,16 +632,59 @@ pub fn plain_terminal_window<'a, Message>(runner: &'a CommandRunner) -> Element<
             border: runner.dynamic_border(theme),
             ..Default::default()
         })
-        .into()
+        .boxed()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_create_command() {
-        let _ = CommandRunner::new("echo", ["hello!"]);
+    #[test]
+    fn test_create_command() {
+        let runner = CommandRunner::new("echo", ["hello!"]);
+        assert_eq!(runner.program(), "echo");
+        assert_eq!(runner.args(), ["hello!"]);
+        assert_eq!(runner.status, Status::Idle);
+    }
+
+    #[test]
+    fn test_terminal_views() {
+        let runner = CommandRunner::new("echo", ["hello!"]);
+        let _: Element<'_, Event> = runner.crate_view(|event| event);
+        let _: Element<'_, Event> = crate::terminal_container(
+            &runner, |event| event, "Run", "Clear",
+        ).boxed();
+        let runner = runner.selectable_text(false);
+        let _: Element<'_, Event> = runner.crate_view(|event| event);
+    }
+
+    #[test]
+    fn progress_updates_replace_one_output_line() {
+        let mut runner = CommandRunner::new("python", ["demo.py"]);
+        runner.push_to_buffer(Terminal::StdIn("$ python demo.py\n".into()));
+        runner.push_to_buffer(Terminal::StdErr("\rProgress: 0%".into()));
+        // A user moving the editor cursor must not affect output replacement.
+        runner.content.perform(text_editor::Action::SelectAll);
+        runner.push_to_buffer(Terminal::StdErr("\rProgress: 50%\rProgress: 100%\n".into()));
+        assert_eq!(runner.buffer.len(), 2);
+        assert_eq!(runner.buffer[0], Terminal::StdIn("$ python demo.py\n".into()));
+        assert_eq!(runner.buffer[1], Terminal::StdErr("Progress: 100%\n".into()));
+        assert_eq!(runner.content.text(), "$ python demo.py\nProgress: 100%\n");
+    }
+
+    #[test]
+    fn progress_updates_handle_split_chunks_and_crlf() {
+        let mut runner = CommandRunner::new_no_args("echo");
+        for chunk in ["\rProgress: ", "0%", "\r", "Progress: 100%", "\r", "\nNext", " line\n"] {
+            runner.push_to_buffer(Terminal::StdOut(chunk.into()));
+        }
+        assert_eq!(runner.buffer, vec![
+            Terminal::StdOut("Progress: 100%\n".into()),
+            Terminal::StdOut("Next line\n".into()),
+        ]);
+        let _ = runner.update(Event::ClearBuffer);
+        runner.push_to_buffer(Terminal::StdOut("fresh".into()));
+        assert_eq!(runner.buffer, vec![Terminal::StdOut("fresh".into())]);
     }
 
     #[test]

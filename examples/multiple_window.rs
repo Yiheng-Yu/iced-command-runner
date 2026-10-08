@@ -1,4 +1,4 @@
-use iced::{Element, Length, Task, alignment::Horizontal, widget};
+use iced::{Length, Task, Widget, alignment::Horizontal, widget};
 use iced_command_runner::{CommandRunner, event::Event, terminal_container};
 
 fn main() -> iced::Result {
@@ -24,7 +24,7 @@ impl App {
         }
     }
 
-    pub fn view(&self) -> Element<'_, Message> {
+    pub fn view(&self) -> impl Widget<Message> + '_ {
         let runner1 = terminal_container(
             &self.runners[0],
             |event| Message::Runner { index: 0, event: event },
@@ -44,9 +44,7 @@ impl App {
         let runner2 = widget::column![widget::text("echo something else"), runner2].spacing(10);
         let runner2 = widget::container(runner2).padding(5.0).align_x(Horizontal::Center);
 
-        widget::container(widget::row![runner1, runner2].spacing(10.0).width(Length::Fill))
-            .height(Length::Shrink)
-            .into()
+        widget::container(widget::row![runner1, runner2].spacing(10.0).width(Length::Fill)).height(Length::Shrink)
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {

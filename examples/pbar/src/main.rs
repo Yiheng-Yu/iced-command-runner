@@ -1,4 +1,4 @@
-use iced;
+use iced::Widget;
 use iced_command_runner::{CommandRunner, Event, create_runner, terminal_container};
 
 fn main() -> iced::Result {
@@ -20,7 +20,7 @@ struct App {
 }
 
 impl App {
-    pub fn view(&self) -> iced::Element<'_, Message> {
+    pub fn view(&self) -> impl Widget<Message> + '_ {
         let terminal_window =
             terminal_container(&self.runner, Message::Runner, "Run dummy progress bar", "Clear history");
 
@@ -30,7 +30,7 @@ impl App {
         ]
         .spacing(10.0);
 
-        iced::widget::container(content).padding(10.0).into()
+        iced::widget::container(content).padding(10.0)
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
@@ -41,5 +41,7 @@ impl App {
 }
 
 fn new() -> App {
-    App{ runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"]) }
+    App {
+        runner: create_runner("python", ["examples/pbar/src/tqdm_test.py"]),
+    }
 }

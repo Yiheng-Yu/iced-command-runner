@@ -1,6 +1,6 @@
 use iced_command_runner::{CommandRunner, create_runner, event::Event, run_button, status_bar};
 
-use iced::{Length, widget};
+use iced::{Length, Widget, widget};
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view).run()
@@ -21,14 +21,14 @@ impl App {
     pub fn new() -> Self {
         Self {
             runner: create_runner("echo", [""])
-            .min_lines(0)
-            .max_lines(5)
-            .selectable_text(false),
+                .min_lines(0)
+                .max_lines(5)
+                .selectable_text(false),
             to_echo: String::new(),
         }
     }
 
-    pub fn view(&self) -> iced::Element<'_, Message> {
+    pub fn view(&self) -> impl Widget<Message> + '_ {
         let title = widget::text("Terminal window with no 'clear buffer' button");
         let button = run_button("Run!", &self.runner.status, Message::Runner);
 
@@ -62,7 +62,6 @@ impl App {
         .spacing(2.5)
         .padding(5.0)
         .height(Length::Shrink)
-        .into()
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {

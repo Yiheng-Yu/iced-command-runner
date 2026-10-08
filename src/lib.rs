@@ -12,7 +12,7 @@ pub use event::{Event, Terminal};
 pub use misc::{clear_buffer_button, run_button, status_bar};
 
 use iced::{
-    Element,
+    Widget,
     alignment::{Horizontal, Vertical},
     widget::{column, container, row, space},
 };
@@ -23,54 +23,43 @@ pub fn create_runner(command: impl Into<String>, args: impl IntoIterator<Item = 
 }
 
 /// Helper function for creating a templated iced container for everything you need for a functional widget that executes commands
-/// Example usage:
-/// Somewhere in your `view()` function:
+/// Wrap the result in a container to apply padding, alignment, or a style.
 ///
-/// ```rust, ignore
-/// use iced_command_runner::{
-///     terminal_container,
-///     CommandRunner,
-///     Event as RunnerEvent,
-/// };
+/// ```rust
+/// use iced::{Widget, widget::container};
+/// use iced_command_runner::{terminal_container, CommandRunner, Event};
 ///
-/// pub enum Message {
-///     ..  // your message goes here
-///     Runner(RunnerEvent)
+/// #[derive(Clone, Debug)]
+/// enum Message {
+///     Runner(Event),
 /// }
 ///
-/// pub struct App {
-///     ..// your widgets...
+/// struct App {
 ///     runner: CommandRunner,
 /// }
 ///
 /// impl App {
-///     fn view(&self) -> Element<'_, Message> {
-///         ...
-///         let terminal_window = terminal_container(
-///             &runner,
-///             Message::Runner
+///     fn view(&self) -> impl Widget<Message> + '_ {
+///         container(terminal_container(
+///             &self.runner,
+///             Message::Runner,
 ///             "Run",
 ///             "Clear",
-///         );
-///         
-///         // terminal_container returns a unformatted iced::widget::container::Container instance,
-///         // and you would almost certainly need to implement your own styling function
-///         .spacing(5.0)
-///         .background(..)
-///         .align_x(..)
-///         .align_y(..);
-///         ...
+///         ))
+///         .padding(5)
+///         .style(container::rounded_box)
 ///     }
 /// }
 /// ```
-pub fn terminal_container<'a, Message>(
+pub fn terminal_container<'a, Message, W>(
     runner: &'a CommandRunner,
     on_update: impl Fn(event::Event) -> Message + 'a,
-    execute: impl Into<Element<'a, Message>>,
-    clear_buffer: impl Into<Element<'a, Message>>,
-) -> container::Container<'a, Message>
+    execute: W,
+    clear_buffer: W,
+) -> impl Widget<Message> + 'a
 where
     Message: Clone + 'a,
+    W: iced::Widget<Message> + 'a,
 {
     let on_update = Rc::new(on_update);
 
@@ -78,16 +67,17 @@ where
     let execute_button_mapper = on_update.clone();
     let clear_buffer_mapper = on_update.clone();
 
-    let terminal_window = runner.crate_view(move |event| (terminal_view_mapper)(event));
+    let terminal_window =
+        runner.crate_view(move |event| (terminal_view_mapper)(event));
 
     let execute = run_button(
-        container(execute).align_x(Horizontal::Center),
+        container(execute.boxed()).align_x(Horizontal::Center),
         &runner.status,
         move |event| (execute_button_mapper)(event),
     );
 
     let clear_buffer = clear_buffer_button(
-        container(clear_buffer).align_x(Horizontal::Center),
+        container(clear_buffer.boxed()).align_x(Horizontal::Center),
         &runner.status,
         move |event| (clear_buffer_mapper)(event),
     );
@@ -102,7 +92,8 @@ where
 
     let status = status_bar::<Message>(&runner.status);
 
-    let stacked = column![buttons, terminal_window, status].spacing(5.0);
+    let stacked = column![buttons, terminal_window, status]
+        .spacing(5.0);
 
     container(stacked)
 }

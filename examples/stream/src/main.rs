@@ -1,4 +1,4 @@
-use iced;
+use iced::Widget;
 use iced_command_runner::{CommandRunner, Event, create_runner, terminal_container};
 
 fn main() -> iced::Result {
@@ -20,17 +20,12 @@ struct App {
 }
 
 impl App {
-    pub fn view(&self) -> iced::Element<'_, Message> {
-        let terminal_window =
-            terminal_container(&self.runner, Message::Runner, "Run", "Clear history");
+    pub fn view(&self) -> impl Widget<Message> + '_ {
+        let terminal_window = terminal_container(&self.runner, Message::Runner, "Run", "Clear history");
 
-        let content = iced::widget::column![
-            iced::widget::text("Data stream demo"),
-            terminal_window
-        ]
-        .spacing(10.0);
+        let content = iced::widget::column![iced::widget::text("Data stream demo"), terminal_window].spacing(10.0);
 
-        iced::widget::container(content).padding(10.0).into()
+        iced::widget::container(content).padding(10.0)
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
@@ -43,7 +38,7 @@ impl App {
 fn new() -> App {
     App {
         runner: create_runner("python", ["examples/stream/src/stream_demo.py"])
-        .min_lines(15)
-        .stream_mode_line(),
+            .min_lines(15)
+            .stream_mode_line(),
     }
 }
