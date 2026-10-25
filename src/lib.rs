@@ -71,13 +71,13 @@ where
         runner.crate_view(move |event| (terminal_view_mapper)(event));
 
     let execute = run_button(
-        container(execute.boxed()).align_x(Horizontal::Center),
+        container(execute).align_x(Horizontal::Center),
         &runner.status,
         move |event| (execute_button_mapper)(event),
     );
 
     let clear_buffer = clear_buffer_button(
-        container(clear_buffer.boxed()).align_x(Horizontal::Center),
+        container(clear_buffer).align_x(Horizontal::Center),
         &runner.status,
         move |event| (clear_buffer_mapper)(event),
     );

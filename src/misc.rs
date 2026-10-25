@@ -2,7 +2,6 @@
 use crate::{command_runner::Status, event::Event};
 use iced::{
     Background, 
-    Element, 
     Length, 
     Theme, 
     Widget, 
@@ -55,7 +54,7 @@ where
 /// A bar showing current status of command execution
 pub fn status_bar<'a, Message>(
     runner_status: &Status,
-) -> Element<'a, Message>
+) -> impl Widget<Message> + 'a
 where
     Message: 'a + Clone,
 {
@@ -97,5 +96,4 @@ where
                 ..Default::default()
             }
         })
-        .boxed()
 }
